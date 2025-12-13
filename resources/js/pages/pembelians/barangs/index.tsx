@@ -127,7 +127,7 @@ export default function PembelianPage({ barangs, pembelian, filters, flash }: Pr
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Edit
+                                                    Ubah
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -138,7 +138,7 @@ export default function PembelianPage({ barangs, pembelian, filters, flash }: Pr
                                                     <DeleteButton id={barang.id} featured='pembelians-barang' />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Delete
+                                                    Hapus
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -153,7 +153,7 @@ export default function PembelianPage({ barangs, pembelian, filters, flash }: Pr
                         <Link
                             key={i}
                             href={link.url ?? '#'}
-                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-black text-white text-sm' : 'text-sm'}`}
+                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-primary text-primary-foreground text-sm' : 'text-sm'}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}

@@ -67,17 +67,17 @@ export default function UserPage({ users, filters, flash }: Props) {
                 <div className='flex space-x-1'>
                     <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-1/3">
                         <Input
-                            placeholder="Search users..."
+                            placeholder="Cari pengguna..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
-                        <Button variant='outline' type="submit">Search</Button>
+                        <Button variant='outline' type="submit">Cari</Button>
                     </form>
                     {hasAnyPermission(["users create"]) && (
                         <Link href="/users/create">
                             <Button variant='default' className='group flex items-center'>
                                 <PlusCircle className='group-hover:rotate-90 transition-all' />
-                                Add Users
+                                Tambah Pengguna
                             </Button>
                         </Link>
                     )}
@@ -87,10 +87,10 @@ export default function UserPage({ users, filters, flash }: Props) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
+                            <TableHead>Nama</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Role</TableHead>
-                            <TableHead>Action</TableHead>
+                            <TableHead>Tindakan</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -120,7 +120,7 @@ export default function UserPage({ users, filters, flash }: Props) {
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Edit
+                                                    Ubah
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -131,7 +131,7 @@ export default function UserPage({ users, filters, flash }: Props) {
                                                     <DeleteButton id={user.id} featured='users' />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Delete
+                                                    Hapus
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -146,7 +146,7 @@ export default function UserPage({ users, filters, flash }: Props) {
                         <Link
                             key={i}
                             href={link.url ?? '#'}
-                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-black text-white text-sm' : 'text-sm'}`}
+                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-primary text-primary-foreground text-sm' : 'text-sm'}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}

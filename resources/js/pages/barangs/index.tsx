@@ -65,17 +65,17 @@ export default function BarangPage({ barangs, filters, flash }: Props) {
                 <div className='flex space-x-1'>
                     <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-1/3">
                         <Input
-                            placeholder="Search by Nama Barang..."
+                            placeholder="Cari berdasarkan Nama Barang..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
-                        <Button variant='outline' type="submit">Search</Button>
+                        <Button variant='outline' type="submit">Cari</Button>
                     </form>
                     {hasAnyPermission(["barangs create"]) && (
                         <Link href="/barangs/create">
                             <Button variant='default' className='group flex items-center'>
                                 <PlusCircle className='group-hover:rotate-90 transition-all' />
-                                Add Barangs
+                                Tambah Barang
                             </Button>
                         </Link>
                     )}
@@ -85,13 +85,13 @@ export default function BarangPage({ barangs, filters, flash }: Props) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
+                            <TableHead>Nama</TableHead>
                             <TableHead>Tipe</TableHead>
                             <TableHead>Stock Awal</TableHead>
                             <TableHead>Stock Keluar</TableHead>
                             <TableHead>Stock Masuk</TableHead>
                             <TableHead>Stock Tersedia</TableHead>
-                            <TableHead>Action</TableHead>
+                            <TableHead>Tindakan</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -120,7 +120,7 @@ export default function BarangPage({ barangs, filters, flash }: Props) {
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Edit
+                                                    Ubah
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -131,7 +131,7 @@ export default function BarangPage({ barangs, filters, flash }: Props) {
                                                     <DeleteButton id={barang.id} featured='barangs' />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Delete
+                                                    Hapus
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -146,7 +146,7 @@ export default function BarangPage({ barangs, filters, flash }: Props) {
                         <Link
                             key={i}
                             href={link.url ?? '#'}
-                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-black text-white text-sm' : 'text-sm'}`}
+                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-primary text-primary-foreground text-sm' : 'text-sm'}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}

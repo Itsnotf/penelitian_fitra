@@ -63,17 +63,17 @@ export default function RolePage({ roles, filters, flash }: Props) {
                 <div className='flex space-x-1'>
                     <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-1/3">
                         <Input
-                            placeholder="Search roles..."
+                            placeholder="Cari role..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
-                        <Button variant='outline' type="submit">Search</Button>
+                        <Button variant='outline' type="submit">Cari</Button>
                     </form>
                     {hasAnyPermission(["roles create"]) && (
                         <Link href="/roles/create">
                             <Button variant='default' className='group flex items-center'>
                                 <PlusCircle className='group-hover:rotate-90 transition-all' />
-                                Add Role
+                                Tambah Role
                             </Button>
                         </Link>
                     )}
@@ -83,8 +83,8 @@ export default function RolePage({ roles, filters, flash }: Props) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className='md:min-w-96 min-w-52'>Name</TableHead>
-                            <TableHead>Action</TableHead>
+                            <TableHead className='md:min-w-96 min-w-52'>Nama</TableHead>
+                            <TableHead>Tindakan</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -110,7 +110,7 @@ export default function RolePage({ roles, filters, flash }: Props) {
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Edit
+                                                    Ubah
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -121,7 +121,7 @@ export default function RolePage({ roles, filters, flash }: Props) {
                                                     <DeleteButton id={role.id} featured="roles" />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Delete
+                                                    Hapus
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -137,7 +137,7 @@ export default function RolePage({ roles, filters, flash }: Props) {
                         <Link
                             key={i}
                             href={link.url ?? '#'}
-                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-black text-white text-sm' : 'text-sm'}`}
+                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-primary text-primary-foreground text-sm' : 'text-sm'}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}

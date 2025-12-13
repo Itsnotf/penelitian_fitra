@@ -85,17 +85,17 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                 <div className='flex space-x-1'>
                     <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-1/3">
                         <Input
-                            placeholder="Search by Deskripsi..."
+                            placeholder="Cari berdasarkan Deskripsi..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
-                        <Button variant='outline' type="submit">Search</Button>
+                        <Button variant='outline' type="submit">Cari</Button>
                     </form>
                     {hasAnyPermission(["pengajuans create"]) && (
                         <Link href="/pengajuans/create">
                             <Button variant='default' className='group flex items-center'>
                                 <PlusCircle className='group-hover:rotate-90 transition-all' />
-                                Add Pengajuan
+                                Tambah Pengajuan
                             </Button>
                         </Link>
                     )}
@@ -105,11 +105,11 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Pengajuan By</TableHead>
+                            <TableHead>Pengajuan Oleh</TableHead>
                             <TableHead>Deskripsi</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Tanggal</TableHead>
-                            <TableHead>Action</TableHead>
+                            <TableHead>Tindakan</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -138,7 +138,7 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Detail
+                                                    Rincian
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -150,7 +150,7 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Edit
+                                                    Ubah
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -172,7 +172,7 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                                                     <RejectPengajuanButton id={pengajuan.id} />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Reject
+                                                    Tolak
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -183,7 +183,7 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                                                     <DeleteButton id={pengajuan.id} featured='pengajuans' />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Delete
+                                                    Hapus
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -198,7 +198,7 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                         <Link
                             key={i}
                             href={link.url ?? '#'}
-                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-black text-white text-sm' : 'text-sm'}`}
+                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-primary text-primary-foreground text-sm' : 'text-sm'}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}

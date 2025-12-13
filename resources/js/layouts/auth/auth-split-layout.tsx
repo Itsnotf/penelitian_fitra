@@ -1,4 +1,5 @@
 import AppLogoIcon from '@/components/app-logo-icon';
+import { Card } from '@/components/ui/card';
 import { home } from '@/routes';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -18,30 +19,34 @@ export default function AuthSplitLayout({
 
     return (
         <div className="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-            <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-                <div className="absolute inset-0 bg-zinc-900" />
+            <div className="relative hidden h-full w-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
+                <div className="absolute inset-0 bg-cover bg-center bg-[url('/logo-image.jpg')]" />
+                <div className="absolute inset-0 bg-zinc-900/50" />
+                {/* <img src="login-image.webp" alt="bapenda" /> */}
+                    
                 <Link
                     href={home()}
                     className="relative z-20 flex items-center text-lg font-medium"
                 >
-                    <AppLogoIcon className="mr-2 size-8 fill-current text-white" />
-                    {name}
+                    <img src="/logo.png" alt="SIBS" className="mr-2 h-8" />
+                    {/* <AppLogoIcon className="mr-2 size-8 fill-current text-white" /> */}
+                    Sistem invetaris Bapenda Sumsel
                 </Link>
                 {quote && (
                     <div className="relative z-20 mt-auto">
                         <blockquote className="space-y-2">
                             <p className="text-lg">
-                                &ldquo;{quote.message}&rdquo;
+                             SIBS adalah Sistem inventaris barang sederhana dan mudah digunakan untuk membantu pengelolaan aset.
                             </p>
                             <footer className="text-sm text-neutral-300">
-                                {quote.author}
+                               Bapenda Sumsel
                             </footer>
                         </blockquote>
                     </div>
                 )}
             </div>
             <div className="w-full lg:p-8">
-                <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+                <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px] ">
                     <Link
                         href={home()}
                         className="relative z-20 flex items-center justify-center lg:hidden"

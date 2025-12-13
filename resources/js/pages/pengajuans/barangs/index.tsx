@@ -131,7 +131,7 @@ export default function PengajuanBarangsPage({ barangs, pengajuan, filters, flas
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Edit
+                                                    Ubah
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -142,7 +142,7 @@ export default function PengajuanBarangsPage({ barangs, pengajuan, filters, flas
                                                     <DeleteButton id={barang.id} featured={`pengajuans/${pengajuan.id}/barangs`} />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Delete
+                                                    Hapus
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -157,7 +157,7 @@ export default function PengajuanBarangsPage({ barangs, pengajuan, filters, flas
                         <Link
                             key={i}
                             href={link.url ?? '#'}
-                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-black text-white text-sm' : 'text-sm'}`}
+                            className={`px-3 py-1 flex justify-center items-center border rounded-md ${link.active ? 'bg-primary text-primary-foreground text-sm' : 'text-sm'}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}

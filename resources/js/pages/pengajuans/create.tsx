@@ -18,14 +18,15 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/pengajuans',
     },
     {
-        title: 'Create',
+        title: 'Buat',
+        href: '/pengajuans/create',
     },
 ];
 
 export default function PengajuanCreatePage({ }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Pengajuan" />
+            <Head title="Buat Pengajuan" />
             <Form
                 method="post"
                 action="/pengajuans"
@@ -58,15 +59,15 @@ export default function PengajuanCreatePage({ }: Props) {
                                     {processing ? (
                                         <>
                                             <Spinner className="mr-2" />
-                                            Creating...
+                                            Membuat...
                                         </>
                                     ) : (
-                                        'Create Pengajuan'
+                                        'Buat Pengajuan'
                                     )}
                                 </Button>
                                 <Link href={'/pengajuans'}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>
