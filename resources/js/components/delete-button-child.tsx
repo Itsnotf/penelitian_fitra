@@ -14,7 +14,7 @@ import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Trash } from 'lucide-react';
 
-export default function DeleteButton({ id, featured}: { id: number , featured: string}) {
+export default function DeleteButtonChild({ id, featured}: { id: number , featured: string}) {
     const handleDelete = () => {
         const deletes = new Promise((resolve, reject) => {
             router.delete(`/${featured}/${id}`, {
@@ -39,7 +39,7 @@ export default function DeleteButton({ id, featured}: { id: number , featured: s
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete.
+                        This action cannot be undone. This will permanently delete the {featured}.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

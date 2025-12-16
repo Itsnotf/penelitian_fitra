@@ -39,9 +39,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('pengajuans/{pengajuan_id}/barangs')->group(function () {
         Route::get('create', [BarangPengajuanController::class, 'create'])->name('pengajuans.barangs.create');
-        Route::get('edit/{barang_Pengajuan}', [BarangPengajuanController::class, 'edit'])->name('pengajuans.barangs.edit');
-        Route::put('/{barang_Pengajuan}', [BarangPengajuanController::class, 'update'])->name('pengajuans.barangs.update');
-        Route::delete('/{barang_Pengajuan}', [BarangPengajuanController::class, 'destroy'])->name('pengajuans.barangs.destroy');
+        Route::get('edit/{barang_Pengajuan_id}', [BarangPengajuanController::class, 'edit'])->name('pengajuans.barangs.edit');
+        Route::put('/{barang_Pengajuan_id}', [BarangPengajuanController::class, 'update'])->name('pengajuans.barangs.update');
+        Route::delete('/{barang_Pengajuan_id}', [BarangPengajuanController::class, 'destroy'])->name('pengajuans.barangs.destroy');
         Route::post('/', [BarangPengajuanController::class, 'store'])->name('pengajuans.barangs.store');
     });
 });

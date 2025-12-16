@@ -32,7 +32,7 @@ export default function PengajuanEditPage({ pengajuan }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit Pengajuan" />
             <Form
-                method="post"
+                method="put"
                 action={`/pengajuans/${pengajuan.id}`}
                 disableWhileProcessing
                 className="flex flex-col gap-6 p-4"

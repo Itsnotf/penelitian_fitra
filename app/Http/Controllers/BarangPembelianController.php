@@ -120,8 +120,9 @@ class BarangPembelianController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Barang_Pembelian $barang_Pembelian, string $pembelian_id)
+    public function destroy(string $pembelian_id, string $barang_Pembelian_id)
     {
+        $barang_Pembelian = Barang_Pembelian::findOrFail($barang_Pembelian_id);
         $pembelian = Pembelians::findOrFail($pembelian_id);
         
         if ($pembelian->status === 'finished') {

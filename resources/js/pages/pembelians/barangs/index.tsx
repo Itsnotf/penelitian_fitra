@@ -135,7 +135,7 @@ export default function PembelianPage({ barangs, pembelian, filters, flash }: Pr
                                         {hasAnyPermission(["pembelians barang delete"]) && pembelian.status === 'pending' && (
                                             <Tooltip>
                                                 <TooltipTrigger>
-                                                    <DeleteButton id={barang.id} featured='pembelians-barang' />
+                                                    <DeleteButton id={barang.id} featured={`pembelians/${pembelian.id}/barangs`} />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     Hapus

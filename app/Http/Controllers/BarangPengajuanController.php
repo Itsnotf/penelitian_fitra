@@ -38,8 +38,9 @@ class BarangPengajuanController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Barang_Pengajuan $barang_Pengajuan, string $pengajuan_id)
+    public function edit(string $pengajuan_id, string $barang_Pengajuan_id )
     {
+        $barang_Pengajuan = Barang_Pengajuan::findOrFail($barang_Pengajuan_id);
         $barangs = Barangs::all();
         return Inertia::render('pengajuans/barangs/edit', [
             'pengajuan_id' => $pengajuan_id,
@@ -51,8 +52,9 @@ class BarangPengajuanController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Barang_Pengajuan $barang_Pengajuan, string $pengajuan_id, StoreRequest $request)
+    public function update(string $pengajuan_id, string $barang_Pengajuan_id, StoreRequest $request)
     {
+        $barang_Pengajuan = Barang_Pengajuan::findOrFail($barang_Pengajuan_id);
         $validated = $request->validated();
         $barang_Pengajuan->update($validated);
         
@@ -62,8 +64,9 @@ class BarangPengajuanController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Barang_Pengajuan $barang_Pengajuan, string $pengajuan_id)
+    public function destroy(string $pengajuan_id, string $barang_Pengajuan_id)
     {
+        $barang_Pengajuan = Barang_Pengajuan::findOrFail($barang_Pengajuan_id);
         $barang_Pengajuan->delete();
         
         return redirect()->route('pengajuans.show', $pengajuan_id)->with('success', 'Barang Pengajuan deleted successfully.');

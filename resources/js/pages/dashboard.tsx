@@ -88,7 +88,7 @@ export default function Dashboard(props: DashboardData) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.totalBarangs}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Items in inventory</p>
+                            <p className="text-xs text-muted-foreground mt-1">Barang dalam inventaris</p>
                         </CardContent>
                     </Card>
 
@@ -100,7 +100,7 @@ export default function Dashboard(props: DashboardData) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.totalPembelians}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Purchase orders</p>
+                            <p className="text-xs text-muted-foreground mt-1">Pemesanan pembelian</p>
                         </CardContent>
                     </Card>
 
@@ -112,7 +112,7 @@ export default function Dashboard(props: DashboardData) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.totalPengajuans}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Loan requests</p>
+                            <p className="text-xs text-muted-foreground mt-1">Pengajuan pinjaman</p>
                         </CardContent>
                     </Card>
 
@@ -124,7 +124,7 @@ export default function Dashboard(props: DashboardData) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.totalStockTersedia}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Available units</p>
+                            <p className="text-xs text-muted-foreground mt-1">Stok tersedia</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -208,18 +208,18 @@ export default function Dashboard(props: DashboardData) {
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <CardTitle>Recent Purchases</CardTitle>
-                                    <CardDescription>Latest purchase orders</CardDescription>
+                                    <CardTitle>Pembelian Terbaru</CardTitle>
+                                    <CardDescription>Pemesanan pembelian terbaru</CardDescription>
                                 </div>
                                 <Link href={pembelians.index().url}>
-                                    <Button size="sm" variant="ghost">View All</Button>
+                                    <Button size="sm" variant="ghost">Lihat Semua</Button>
                                 </Link>
                             </div>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
                                 {recentPembelians.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground">No purchase orders yet</p>
+                                    <p className="text-sm text-muted-foreground">Belum ada pemesanan pembelian</p>
                                 ) : (
                                     recentPembelians.map((pembelian) => (
                                         <div key={pembelian.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors">
@@ -246,18 +246,18 @@ export default function Dashboard(props: DashboardData) {
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <CardTitle>Recent Requests</CardTitle>
-                                    <CardDescription>Latest loan requests</CardDescription>
+                                    <CardTitle>Pengajuan Terbaru</CardTitle>
+                                    <CardDescription>Pengajuan pinjaman terbaru</CardDescription>
                                 </div>
                                 <Link href={pengajuans.index().url}>
-                                    <Button size="sm" variant="ghost">View All</Button>
+                                    <Button size="sm" variant="ghost">Lihat Semua</Button>
                                 </Link>
                             </div>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
                                 {recentPengajuans.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground">No loan requests yet</p>
+                                    <p className="text-sm text-muted-foreground">Belum ada pengajuan pinjaman</p>
                                 ) : (
                                     recentPengajuans.map((pengajuan) => (
                                         <div key={pengajuan.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors">
@@ -283,7 +283,7 @@ export default function Dashboard(props: DashboardData) {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-base">Pembelian Status</CardTitle>
-                            <CardDescription>Distribution by status</CardDescription>
+                            <CardDescription>Distribusi berdasarkan status</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
@@ -309,7 +309,7 @@ export default function Dashboard(props: DashboardData) {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-base">Pengajuan Status</CardTitle>
-                            <CardDescription>Distribution by status</CardDescription>
+                            <CardDescription>Distribusi berdasarkan status</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">

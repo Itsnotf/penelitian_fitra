@@ -61,7 +61,7 @@ export default function BarangPengajuanEditPage({ barang_pengajuan, barangs, pen
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit Barang Pengajuan" />
             <Form
-                method="post"
+                method="put"
                 action={`/pengajuans/${pengajuan_id}/barangs/${barang_pengajuan.id}`}
                 disableWhileProcessing
                 className="flex flex-col gap-6 p-4"
@@ -70,6 +70,8 @@ export default function BarangPengajuanEditPage({ barang_pengajuan, barangs, pen
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
+
+                                <Input id='pengajuan_id' type="hidden" name="pengajuan_id" value={pengajuan_id} />
                                 <Label htmlFor="barang_id">Barang</Label>
                                 <Select
                                     name="barang_id"
@@ -119,15 +121,6 @@ export default function BarangPengajuanEditPage({ barang_pengajuan, barangs, pen
                                     ) : (
                                         'Update Barang Pengajuan'
                                     )}
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    className="mt-2 w-fit"
-                                    onClick={handleDeleteClick}
-                                    disabled={processing}
-                                >
-                                    Delete
                                 </Button>
                                 <Link href={`/pengajuans/${pengajuan_id}`}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
