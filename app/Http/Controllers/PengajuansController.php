@@ -6,6 +6,7 @@ use App\Http\Requests\Pengajuan\StoreRequest;
 use App\Http\Requests\Pengajuan\UpdateRequest;
 use App\Models\Barang_Pengajuan;
 use App\Models\Pengajuans;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -23,6 +24,7 @@ class PengajuansController extends Controller implements HasMiddleware
             new Middleware('permission:pengajuans edit', only: ['edit', 'update']),
             new Middleware('permission:pengajuans delete', only: ['destroy']),
             new Middleware('permission:pengajuans change status', only: ['changeStatus']),
+            new Middleware('permission:pengajuans show', only: ['downloadPdf']),
         ];
     }
 
@@ -166,5 +168,20 @@ class PengajuansController extends Controller implements HasMiddleware
         $pengajuan->save();
 
         return redirect()->route('pengajuans.index')->with('success', 'Pengajuan berhasil ditolak.');
+    }
+
+    /**
+     * Download pengajuan as PDF
+     */
+    public function downloadPdf(string $id)
+    {
+        $pengajuan = Pengajuans::with('barang_pengajuans.barang', 'user')->findOrFail($id);
+        
+        $html = view('pdf.pengajuan', ['pengajuan' => $pengajuan])->render();
+        
+        $pdf = Pdf::loadHTML($html);
+        $pdf->setPaper('A4', 'portrait');
+        
+        return $pdf->download("Laporan-Pengajuan-{$pengajuan->id}.pdf");
     }
 }

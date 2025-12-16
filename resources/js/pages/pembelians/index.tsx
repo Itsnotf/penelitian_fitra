@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import DeleteButton from '@/components/delete-button';
 import ChangeStatusButton from '@/components/change-status-button';
+import DownloadPdfLink from '@/components/download-pdf-link';
 import { Edit2Icon, Glasses, PlusCircle, WalletCards } from 'lucide-react';
 import { BreadcrumbItem, Pembelian, SharedData } from '@/types';
 import { toast } from 'sonner';
@@ -116,7 +117,7 @@ export default function PembelianPage({ pembelians, filters, flash }: Props) {
                                     <TableCell className="space-x-2">
                                         {hasAnyPermission(["pembelians show"]) && (
                                             <Tooltip>
-                                                <TooltipTrigger>
+                                                <TooltipTrigger asChild>
                                                     <Link href={`/pembelians/${pembelian.id}`}>
                                                         <Button variant="outline" size="sm" className='hover:bg-blue-200 hover:text-blue-600'> <WalletCards/></Button>
                                                     </Link>
@@ -126,9 +127,21 @@ export default function PembelianPage({ pembelians, filters, flash }: Props) {
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
+                                        {hasAnyPermission(["pembelians show"]) && (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                 <Button variant="outline" size="sm" className='hover:bg-blue-200 hover:text-blue-600'> 
+                                                    <DownloadPdfLink id={pembelian.id} type="pembelians" />
+                                                 </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    Download PDF
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        )}
                                         {hasAnyPermission(["pembelians edit"]) && (
                                             <Tooltip>
-                                                <TooltipTrigger>
+                                                <TooltipTrigger asChild>
                                                     <Link href={`/pembelians/${pembelian.id}/edit`}>
                                                         <Button variant="outline" size="sm" className='hover:bg-blue-200 hover:text-blue-600'> <Edit2Icon /></Button>
                                                     </Link>

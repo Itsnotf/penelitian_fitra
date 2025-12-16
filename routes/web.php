@@ -24,10 +24,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('barangs', BarangsController::class);
     Route::resource('pembelians', PembeliansController::class);
     Route::post('pembelians/{id}/change-status', [PembeliansController::class, 'changeStatus'])->name('pembelians.changeStatus');
+    Route::get('pembelians/{id}/download-pdf', [PembeliansController::class, 'downloadPdf'])->name('pembelians.downloadPdf');
 
     Route::resource('pengajuans', PengajuansController::class);
     Route::post('pengajuans/{id}/change-status', [PengajuansController::class, 'changeStatus'])->name('pengajuans.changeStatus');
     Route::post('pengajuans/{id}/reject-status', [PengajuansController::class, 'rejectStatus'])->name('pengajuans.rejectStatus');
+    Route::get('pengajuans/{id}/download-pdf', [PengajuansController::class, 'downloadPdf'])->name('pengajuans.downloadPdf');
 
     Route::prefix('pembelians/{pembelian_id}/barangs')->group(function () {
         Route::get('create', [BarangPembelianController::class, 'create'])->name('pembelians.barangs.create');

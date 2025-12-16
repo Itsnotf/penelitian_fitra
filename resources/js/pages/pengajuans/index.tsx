@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/tooltip"
 import hasAnyPermission from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import DownloadPdfLink from '@/components/download-pdf-link';
 
 interface Pengajuan {
     id: number;
@@ -132,9 +133,9 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                                     <TableCell className="space-x-2">
                                         {hasAnyPermission(["pengajuans show"]) && (
                                             <Tooltip>
-                                                <TooltipTrigger>
+                                                <TooltipTrigger asChild>
                                                     <Link href={`/pengajuans/${pengajuan.id}`}>
-                                                        <Button variant="outline" size="sm" className='hover:bg-blue-200 hover:text-blue-600'> <WalletCards/></Button>
+                                                        <Button variant="outline" size="sm" className='hover:bg-blue-200 hover:text-blue-600'> <WalletCards /></Button>
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
@@ -142,9 +143,22 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
+                                        {hasAnyPermission(["pengajuans show"]) && (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="outline" size="sm" className='hover:bg-blue-200 hover:text-blue-600'>
+
+                                                        <DownloadPdfLink id={pengajuan.id} type="pengajuans" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    Download PDF
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        )}
                                         {hasAnyPermission(["pengajuans edit"]) && pengajuan.status === 'pending' && (
                                             <Tooltip>
-                                                <TooltipTrigger>
+                                                <TooltipTrigger asChild>
                                                     <Link href={`/pengajuans/${pengajuan.id}/edit`}>
                                                         <Button variant="outline" size="sm" className='hover:bg-blue-200 hover:text-blue-600'> <Edit2Icon /></Button>
                                                     </Link>

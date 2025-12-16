@@ -6,6 +6,7 @@ use App\Http\Requests\Pembelian\StoreRequest;
 use App\Http\Requests\Pembelian\UpdateRequest;
 use App\Models\Barang_Pembelian;
 use App\Models\Pembelians;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -24,6 +25,7 @@ class PembeliansController extends Controller implements HasMiddleware
             new Middleware('permission:pembelians edit', only: ['edit', 'update']),
             new Middleware('permission:pembelians delete', only: ['destroy']),
             new Middleware('permission:pembelians change status', only: ['changeStatus']),
+            new Middleware('permission:pembelians show', only: ['downloadPdf']),
         ];
     }
     /**
@@ -151,5 +153,20 @@ class PembeliansController extends Controller implements HasMiddleware
         $pembelian->save();
 
         return redirect()->route('pembelians.index')->with('success', 'Pembelian status berhasil diubah ke finished.');
+    }
+
+    /**
+     * Download pembelian as PDF
+     */
+    public function downloadPdf(string $id)
+    {
+        $pembelian = Pembelians::with('barang_pembelians.barang', 'user')->findOrFail($id);
+        
+        $html = view('pdf.pembelian', ['pembelian' => $pembelian])->render();
+        
+        $pdf = Pdf::loadHTML($html);
+        $pdf->setPaper('A4', 'portrait');
+        
+        return $pdf->download("Laporan-Pembelian-{$pembelian->id}.pdf");
     }
 }
