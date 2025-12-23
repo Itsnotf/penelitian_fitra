@@ -30,13 +30,13 @@ export default function AuthSplitLayout({
                 >
                     <img src="/logo.png" alt="SIBS" className="mr-2 h-8" />
                     {/* <AppLogoIcon className="mr-2 size-8 fill-current text-white" /> */}
-                    Sistem inventarisasi Bapenda Sumsel
+                    Sistem Inventarisasi Bapenda Sumsel 
                 </Link>
                 {quote && (
                     <div className="relative z-20 mt-auto">
                         <blockquote className="space-y-2">
                             <p className="text-lg">
-                             SIBS adalah Sistem inventarisasi barang sederhana dan mudah digunakan untuk membantu pengelolaan aset.
+                             SIBS adalah Sistem Inventarisasi barang sederhana dan mudah digunakan untuk membantu pengelolaan aset.
                             </p>
                             <footer className="text-sm text-neutral-300">
                                Bapenda Sumsel
