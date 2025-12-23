@@ -5,8 +5,8 @@ export default function AppLogo() {
                 <img src="/logo.png" alt="SIBS" className="h-full" />
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold">
-                    Sistem inventaris
+                <span className="mb-0.5  leading-tight font-semibold">
+                    Sistem Inventarisasi Bapenda Sumsel
                 </span>
             </div>
         </>
