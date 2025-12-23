@@ -31,13 +31,13 @@ const mainNavItems: NavItem[] = [
 
 const userManagement: NavItem[] = [
     {
-        title: 'Users',
+        title: 'Pengguna',
         href: users.index(),
         icon: User,
         permissions: ['users index'],
     },
     {
-        title: 'Roles',
+        title: 'Peran',
         href: roles.index(),
         icon: KeyIcon,
         permissions: ['roles index'],

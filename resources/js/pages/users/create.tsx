@@ -29,7 +29,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Users',
+        title: 'Pengguna',
         href: users.index().url,
     },
     {
@@ -43,7 +43,7 @@ export default function UserCreatePage({ roles }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Users" />
+            <Head title="Pengguna" />
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}

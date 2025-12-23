@@ -20,7 +20,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Roles',
+        title: 'Peran',
         href: '/roles',
     },
     {
@@ -32,7 +32,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function RoleCreatePage({ permissions }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Role" />
+            <Head title="Buat Peran" />
             <Card className='m-4'>
                 <Form
                     method="post"

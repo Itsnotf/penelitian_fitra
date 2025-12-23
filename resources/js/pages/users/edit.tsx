@@ -26,7 +26,7 @@ interface Props {
 export default function UserEditPage({ roles, user }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: 'Users',
+            title: 'Pengguna',
             href: users.index().url,
         },
         {
@@ -38,7 +38,7 @@ export default function UserEditPage({ roles, user }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Users" />
+            <Head title="Pengguna" />
             <Form
                 {...update.form(user.id)}
                 className="flex flex-col gap-6 p-4"

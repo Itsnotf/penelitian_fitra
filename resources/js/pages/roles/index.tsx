@@ -31,7 +31,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Roles',
+        title: 'Peran',
         href: '/roles',
     },
 ];
@@ -56,7 +56,7 @@ export default function RolePage({ roles, filters, flash }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Roles" />
+            <Head title="Peran" />
 
             <div className="p-4 space-y-4">
                 {/* Search Bar */}
@@ -92,7 +92,7 @@ export default function RolePage({ roles, filters, flash }: Props) {
                         {roles.data.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={8} className="h-[65vh]  text-center">
-                                    Belum Ada Data Role.
+                                    Belum Ada Data Peran.
                                 </TableCell>
                             </TableRow>
                         ) : (

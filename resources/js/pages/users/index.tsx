@@ -34,7 +34,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Users',
+        title: 'Pengguna',
         href: users.index().url,
     },
 ];
@@ -59,7 +59,7 @@ export default function UserPage({ users, filters, flash }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Users" />
+            <Head title="Pengguna" />
 
             <div className="p-4 space-y-4">
 
@@ -98,7 +98,7 @@ export default function UserPage({ users, filters, flash }: Props) {
                         {users.data.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={8} className="h-[65vh]  text-center">
-                                    Belum Ada Data Users.
+                                    Belum Ada Data Pengguna.
                                 </TableCell>
                             </TableRow>
                         ) : (
