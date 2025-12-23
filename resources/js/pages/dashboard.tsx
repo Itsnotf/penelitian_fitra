@@ -119,7 +119,7 @@ export default function Dashboard(props: DashboardData) {
                     {/* Stock Tersedia */}
                     <Card className="hover:shadow-lg transition-shadow">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Stock Tersedia</CardTitle>
+                            <CardTitle className="text-sm font-medium">Stok Tersedia</CardTitle>
                             <TrendingUp className="h-4 w-4 text-orange-500" />
                         </CardHeader>
                         <CardContent>
@@ -133,40 +133,40 @@ export default function Dashboard(props: DashboardData) {
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Stock Masuk</CardTitle>
+                            <CardTitle className="text-sm font-medium">Stok Masuk</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center justify-between">
                                 <div className="text-2xl font-bold text-green-600">{stats.totalStockMasuk}</div>
                                 <TrendingUp className="h-5 w-5 text-green-500" />
                             </div>
-                            <p className="text-xs text-muted-foreground mt-2">Goods received</p>
+                            <p className="text-xs text-muted-foreground mt-2">Stok masuk</p>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Stock Keluar</CardTitle>
+                            <CardTitle className="text-sm font-medium">Stok Keluar</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center justify-between">
                                 <div className="text-2xl font-bold text-red-600">{stats.totalStockKeluar}</div>
                                 <TrendingDown className="h-5 w-5 text-red-500" />
                             </div>
-                            <p className="text-xs text-muted-foreground mt-2">Goods borrowed</p>
+                            <p className="text-xs text-muted-foreground mt-2">Stok keluar</p>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Low Stock Alert</CardTitle>
+                            <CardTitle className="text-sm font-medium">Peringatan Stok Menipis</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center justify-between">
                                 <div className="text-2xl font-bold text-amber-600">{lowStockBarangs.length}</div>
                                 <AlertTriangle className="h-5 w-5 text-amber-500" />
                             </div>
-                            <p className="text-xs text-muted-foreground mt-2">Items below 10 units</p>
+                            <p className="text-xs text-muted-foreground mt-2">Barang dengan stok kurang dari 10 unit</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -177,9 +177,9 @@ export default function Dashboard(props: DashboardData) {
                         <CardHeader>
                             <div className="flex items-center gap-2">
                                 <AlertTriangle className="h-5 w-5 text-amber-600" />
-                                <CardTitle className="text-amber-900">Low Stock Items</CardTitle>
+                                <CardTitle className="text-amber-900">Peringatan Stok Menipis</CardTitle>
                             </div>
-                            <CardDescription className="text-amber-800">Items with less than 10 units available</CardDescription>
+                            <CardDescription className="text-amber-800">Barang dengan stok kurang dari 10 unit</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2">
@@ -187,11 +187,11 @@ export default function Dashboard(props: DashboardData) {
                                     <div key={barang.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-amber-100">
                                         <div className="flex-1">
                                             <p className="font-medium text-sm">{barang.nama_barang}</p>
-                                            <p className="text-xs text-muted-foreground">Stock: {barang.stock_tersedia} units</p>
+                                            <p className="text-xs text-muted-foreground">Stok: {barang.stock_tersedia} unit</p>
                                         </div>
                                         <Link href={barangs.edit(barang.id).url}>
                                             <Button size="sm" variant="outline" className="text-amber-600 hover:bg-amber-100">
-                                                View
+                                                Lihat
                                             </Button>
                                         </Link>
                                     </div>
