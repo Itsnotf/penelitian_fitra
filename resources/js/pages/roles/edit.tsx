@@ -40,14 +40,14 @@ export default function RoleEditPage({ role, permissions }: Props) {
                         <>
                             <div className="grid gap-6">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Role Name</Label>
+                                    <Label htmlFor="name">Nama Peran</Label>
                                     <Input
                                         id="name"
                                         type="text"
                                         required
                                         name="name"
                                         defaultValue={role.name}
-                                        placeholder="Enter role name"
+                                        placeholder="Masukkan nama Peran"
                                     />
                                     <InputError message={errors.name} />
                                 </div>

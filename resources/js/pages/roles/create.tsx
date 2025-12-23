@@ -43,14 +43,14 @@ export default function RoleCreatePage({ permissions }: Props) {
                         <>
                             <div className="grid gap-6">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Role Name</Label>
+                                    <Label htmlFor="name">Nama Peran</Label>
                                     <Input
                                         id="name"
                                         type="text"
                                         required
                                         autoFocus
                                         name="name"
-                                        placeholder="Enter role name"
+                                        placeholder="Enter nama Peran"
                                     />
                                     <InputError message={errors.name} />
                                 </div>

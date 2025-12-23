@@ -63,7 +63,7 @@ export default function RolePage({ roles, filters, flash }: Props) {
                 <div className='flex space-x-1'>
                     <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-1/3">
                         <Input
-                            placeholder="Cari role..."
+                            placeholder="Cari Peran..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -73,7 +73,7 @@ export default function RolePage({ roles, filters, flash }: Props) {
                         <Link href="/roles/create">
                             <Button variant='default' className='group flex items-center'>
                                 <PlusCircle className='group-hover:rotate-90 transition-all' />
-                                Tambah Role
+                                Tambah Peran
                             </Button>
                         </Link>
                     )}

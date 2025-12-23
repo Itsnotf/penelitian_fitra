@@ -89,7 +89,7 @@ export default function UserPage({ users, filters, flash }: Props) {
                         <TableRow>
                             <TableHead>Nama</TableHead>
                             <TableHead>Email</TableHead>
-                            <TableHead>Role</TableHead>
+                            <TableHead>Peran</TableHead>
                             <TableHead>Tindakan</TableHead>
                         </TableRow>
                     </TableHeader>

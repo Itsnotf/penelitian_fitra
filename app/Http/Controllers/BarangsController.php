@@ -28,7 +28,7 @@ class BarangsController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         $barangs = Barangs::when($request->search, function ($query, $search) {
-            $query->where('nama', 'like', "%{$search}%");
+            $query->where('nama_barang', 'like', "%{$search}%");
         })
             ->paginate(8)
             ->withQueryString();
