@@ -82,7 +82,7 @@ export default function RoleCreatePage({ permissions }: Props) {
                                                 Creating...
                                             </>
                                         ) : (
-                                            'Create Role'
+                                            'Buat Peran'
                                         )}
                                     </Button>
                                     <Link href="/roles">
