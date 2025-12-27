@@ -141,12 +141,12 @@ export default function UserCreatePage({ roles }: Props) {
                                             Creating...
                                         </>
                                     ) : (
-                                        'Create account'
+                                        'Buat Akun'
                                     )}
                                 </Button>
                                 <Link href={'/users'}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>

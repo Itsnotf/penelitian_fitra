@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BarangsController extends Controller implements HasMiddleware
 {
@@ -19,6 +20,7 @@ class BarangsController extends Controller implements HasMiddleware
             new Middleware('permission:barangs create', only: ['create', 'store']),
             new Middleware('permission:barangs edit', only: ['edit', 'update   ']),
             new Middleware('permission:barangs delete', only: ['destroy']),
+            new Middleware('auth', only: ['downloadPdf']),
         ];
     }
 
@@ -100,5 +102,19 @@ class BarangsController extends Controller implements HasMiddleware
         $barang->delete();
 
         return redirect()->route('barangs.index')->with('success', 'Barang deleted successfully.');
+    }
+
+    /**
+     * Download PDF laporan barang
+     */
+    public function downloadPdf()
+    {
+        $barangs = Barangs::all();
+        $html = view('pdf.barang', ['barangs' => $barangs])->render();
+        
+        $pdf = Pdf::loadHTML($html);
+        $pdf->setPaper('A4', 'portrait');
+        
+        return $pdf->download('Laporan-Barang-' . date('Y-m-d') . '.pdf');
     }
 }

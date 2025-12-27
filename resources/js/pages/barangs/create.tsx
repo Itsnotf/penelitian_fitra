@@ -69,10 +69,10 @@ export default function UserCreatePage() {
                                         <SelectValue placeholder="Select a Tipe" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value='atk'>
+                                        <SelectItem value='ATK'>
                                             Alat Tulis Kantor
                                         </SelectItem>
-                                        <SelectItem value='elektronik'>
+                                        <SelectItem value='ELEKTRONIK'>
                                             Elektronik
                                         </SelectItem>
                                     </SelectContent>
@@ -162,12 +162,12 @@ export default function UserCreatePage() {
                                             Creating...
                                         </>
                                     ) : (
-                                        'Create barang'
+                                        'Buat Barang'
                                     )}
                                 </Button>
                                 <Link href={'/barangs'}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>

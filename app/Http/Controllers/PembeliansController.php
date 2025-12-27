@@ -161,7 +161,7 @@ class PembeliansController extends Controller implements HasMiddleware
     public function downloadPdf(string $id)
     {
         $pembelian = Pembelians::with('barang_pembelians.barang', 'user')->findOrFail($id);
-        
+        // dd($pembelian);
         $html = view('pdf.pembelian', ['pembelian' => $pembelian])->render();
         
         $pdf = Pdf::loadHTML($html);

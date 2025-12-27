@@ -5,6 +5,7 @@ import { Link, Head, router, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import DeleteButton from '@/components/delete-button';
+import DownloadPdfLink from '@/components/download-pdf-link';
 import { Edit2Icon, PlusCircle } from 'lucide-react';
 import { Barang, BreadcrumbItem, SharedData, User } from '@/types';
 import { toast } from 'sonner';
@@ -71,6 +72,7 @@ export default function BarangPage({ barangs, filters, flash }: Props) {
                         />
                         <Button variant='outline' type="submit">Cari</Button>
                     </form>
+
                     {hasAnyPermission(["barangs create"]) && (
                         <Link href="/barangs/create">
                             <Button variant='default' className='group flex items-center'>
@@ -79,6 +81,17 @@ export default function BarangPage({ barangs, filters, flash }: Props) {
                             </Button>
                         </Link>
                     )}
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="outline" size="default">
+                                <DownloadPdfLink type='barangs' />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            Laporan Barang
+                        </TooltipContent>
+                    </Tooltip>
                 </div>
 
                 {/* User Table */}

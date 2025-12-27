@@ -75,10 +75,10 @@ export default function BarangEditPage({ barang }: Props) {
                                         <SelectValue placeholder="Select a Tipe" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value='atk'>
+                                        <SelectItem value='ATK'>
                                             Alat Tulis Kantor
                                         </SelectItem>
-                                        <SelectItem value='elektronik'>
+                                        <SelectItem value='ELEKTRONIK'>
                                             Elektronik
                                         </SelectItem>
                                     </SelectContent>

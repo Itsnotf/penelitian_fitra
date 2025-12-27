@@ -73,10 +73,10 @@ export default function UserCreatePage() {
                                     tabIndex={1}
                                     autoComplete="deskripsi"
                                     name="deskripsi"
-                                    placeholder="(e.g., Pembelian untuk keperluan kantor)"
+                                    placeholder="(e.g., Jelaskan secara singkat keterangan pembelian)"
                                 />
                                 <InputError
-                                    message={errors.vendor}
+                                    message={errors.deskripsi}
                                     className="mt-2"
                                 />
                             </div>
@@ -89,7 +89,7 @@ export default function UserCreatePage() {
                                             Creating...
                                         </>
                                     ) : (
-                                        'Create Pembelian'
+                                        'Buat Pembelian'
                                     )}
                                 </Button>
                                 <Link href={'/pembelians'}>
