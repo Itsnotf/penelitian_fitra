@@ -88,7 +88,7 @@
 <body>
 
     <div class="header">
-        <h2>Bapenda Sumatera Selatan</h2>
+        <h2>Bapenda Provinsi Sumatera Selatan</h2>
         <p>Jl. POM IX, Lorok Pakjo, Kec. Ilir Barat I, Kota Palembang, Sumatera Selatan, 30137-Indonesia <br> Telp: (+62) 08117822364 | bapenda@sumselprov.go.id</p>
     </div>
 
