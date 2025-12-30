@@ -6,10 +6,20 @@ use App\Http\Requests\BarangPengajuan\StoreRequest;
 use App\Models\Barang_Pengajuan;
 use App\Models\Barangs;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 
-class BarangPengajuanController extends Controller
+class BarangPengajuanController extends Controller implements HasMiddleware
 {
+     public static function middleware()
+    {
+        return [
+            new Middleware('permission:pengajuans barang create', only: ['create', 'store']),
+            new Middleware('permission:pengajuans barang edit', only: ['edit', 'update   ']),
+            new Middleware('permission:pengajuans barang delete', only: ['destroy']),
+        ];
+    }
     /**
      * Show the form for creating a new resource.
      */

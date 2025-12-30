@@ -33,7 +33,13 @@ class PengajuansController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
-        $pengajuans = Pengajuans::with('user')->when($request->search, function ($query, $search) {
+        $query = Pengajuans::with('user');
+        
+        if ($request->user()?->roles()->where('name', 'User')->exists()) {
+            $query->where('user_id', Auth::id());
+        }
+        
+        $pengajuans = $query->when($request->search, function ($query, $search) {
             $query->where('deskripsi', 'like', "%{$search}%");
         })
             ->paginate(8)

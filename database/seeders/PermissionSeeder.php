@@ -13,6 +13,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            'dashboard',
             'users index',
             'users create',
             'users edit',
