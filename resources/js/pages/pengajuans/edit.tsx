@@ -20,7 +20,7 @@ export default function PengajuanEditPage({ pengajuan }: Props) {
             href: '/pengajuans',
         },
         {
-            title: 'Edit',
+            title: 'Ubah',
             href: `/pengajuans/${pengajuan.id}/edit`,
         },
     ];
@@ -30,7 +30,7 @@ export default function PengajuanEditPage({ pengajuan }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Edit Pengajuan" />
+            <Head title="Ubah Pengajuan" />
             <Form
                 method="put"
                 action={`/pengajuans/${pengajuan.id}`}
@@ -86,12 +86,12 @@ export default function PengajuanEditPage({ pengajuan }: Props) {
                                             Updating...
                                         </>
                                     ) : (
-                                        'Update Pengajuan'
+                                        'Perbarui Pengajuan'
                                     )}
                                 </Button>
                                 <Link href={'/pengajuans'}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>

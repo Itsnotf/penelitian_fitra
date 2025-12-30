@@ -39,7 +39,7 @@ export default function BarangPengajuanEditPage({ barang_pengajuan, barangs, pen
             href: `/pengajuans/${pengajuan_id}`,
         },
         {
-            title: 'Edit',
+            title: 'Ubah',
             href: `/pengajuans/${pengajuan_id}/barangs/${barang_pengajuan.id}/edit`,
         },
     ];
@@ -59,7 +59,7 @@ export default function BarangPengajuanEditPage({ barang_pengajuan, barangs, pen
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Edit Barang Pengajuan" />
+            <Head title="Ubah Barang Pengajuan" />
             <Form
                 method="put"
                 action={`/pengajuans/${pengajuan_id}/barangs/${barang_pengajuan.id}`}
@@ -119,12 +119,12 @@ export default function BarangPengajuanEditPage({ barang_pengajuan, barangs, pen
                                             Updating...
                                         </>
                                     ) : (
-                                        'Update Barang Pengajuan'
+                                        'Perbarui Barang Pengajuan'
                                     )}
                                 </Button>
                                 <Link href={`/pengajuans/${pengajuan_id}`}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>

@@ -36,7 +36,7 @@ export default function BarangPembelianEditPage({ barang_pembelian, barangs, pem
             href: pembelians.show(pembelian_id).url,
         },
         {
-            title: 'Edit',
+            title: 'Ubah',
             href: pembelians.barangs.edit({pembelian_id: barang_pembelian.pembelian_id.toString(), barang_Pembelian_id: barang_pembelian.id}).url,
         },
     ];
@@ -119,12 +119,12 @@ export default function BarangPembelianEditPage({ barang_pembelian, barangs, pem
                                             Updating...
                                         </>
                                     ) : (
-                                        'Update Barang Pembelian'
+                                        'Perbarui Barang Pembelian'
                                     )}
                                 </Button>
                                 <Link href={pembelians.show(pembelian_id).url}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>

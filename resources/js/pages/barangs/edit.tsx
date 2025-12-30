@@ -172,12 +172,12 @@ export default function BarangEditPage({ barang }: Props) {
                                             Updating...
                                         </>
                                     ) : (
-                                        'Updating barang'
+                                        'Perbarui Barang'
                                     )}
                                 </Button>
                                 <Link href={'/barangs'}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>

@@ -22,7 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('users', UserController::class);
     Route::resource('roles', RoleController::class);
     Route::get('barangs/download-pdf', [BarangsController::class, 'downloadPdf'])->name('barangs.downloadPdf');
-    Route::resource('barangs', BarangsController::class);
+    Route::resource('barangs', BarangsController::class); 
     Route::resource('pembelians', PembeliansController::class);
     Route::post('pembelians/{id}/change-status', [PembeliansController::class, 'changeStatus'])->name('pembelians.changeStatus');
     Route::get('pembelians/{id}/download-pdf', [PembeliansController::class, 'downloadPdf'])->name('pembelians.downloadPdf');

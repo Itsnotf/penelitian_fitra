@@ -46,7 +46,7 @@ export default function PembelianPage({ barangs, pembelian, filters, flash }: Pr
             href: pembelians.show(pembelian.id).url,
         },
         {
-            title: 'Detail',
+            title: 'Rincian',
             href: pembelians.show(pembelian.id).url,
         },
     ];
@@ -70,7 +70,7 @@ export default function PembelianPage({ barangs, pembelian, filters, flash }: Pr
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Detail Pembelian" />
+            <Head title="Rincian Pembelian" />
 
             <div className="p-4 space-y-4">
 
@@ -88,7 +88,7 @@ export default function PembelianPage({ barangs, pembelian, filters, flash }: Pr
                         <Link href={pembelians.barangs.create(pembelian.id).url}>
                             <Button variant='default' className='group flex items-center'>
                                 <PlusCircle className='group-hover:rotate-90 transition-all' />
-                                Add Barang
+                                Tambah Barang
                             </Button>
                         </Link>
                     )}
@@ -101,7 +101,7 @@ export default function PembelianPage({ barangs, pembelian, filters, flash }: Pr
                             <TableHead>Nama Barang</TableHead>
                             <TableHead>Harga</TableHead>
                             <TableHead>Jumlah</TableHead>
-                            <TableHead>Action</TableHead>
+                            <TableHead>Tindakan</TableHead>
                         </TableRow>
                     </TableHeader>
 

@@ -33,7 +33,7 @@ export default function BarangPembelianCreatePage({ barangs, pembelian_id }: Pro
             href: pembelians.show(pembelian_id).url,
         },
         {
-            title: 'Create',
+            title: 'Buat',
             href: pembelians.barangs.create(pembelian_id).url,
         },
     ];
@@ -114,12 +114,12 @@ export default function BarangPembelianCreatePage({ barangs, pembelian_id }: Pro
                                             Creating...
                                         </>
                                     ) : (
-                                        'Create Barang Pembelian'
+                                        'Buat Barang Pembelian'
                                     )}
                                 </Button>
                                 <Link href={pembelians.show(pembelian_id).url}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>

@@ -30,14 +30,14 @@ export default function BarangPengajuanCreatePage({ barangs, pengajuan_id }: Pro
             href: `/pengajuans/${pengajuan_id}`,
         },
         {
-            title: 'Create',
+            title: 'Buat',
             href: `/pengajuans/${pengajuan_id}/barangs/create`,
         },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Pengajuan Barang" />
+            <Head title="Buat Barang Pengajuan" />
             <Form
                 method="post"
                 action={`/pengajuans/${pengajuan_id}/barangs`}
@@ -93,12 +93,12 @@ export default function BarangPengajuanCreatePage({ barangs, pengajuan_id }: Pro
                                             Creating...
                                         </>
                                     ) : (
-                                        'Create Barang Pengajuan'
+                                        'Buat Barang Pengajuan'
                                     )}
                                 </Button>
                                 <Link href={`/pengajuans/${pengajuan_id}`}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>

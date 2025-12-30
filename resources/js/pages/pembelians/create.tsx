@@ -26,7 +26,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: pembelians.index().url,
     },
     {
-        title: 'Create',
+        title: 'Buat',
         href: pembelians.create().url,
     },
 ];
@@ -94,7 +94,7 @@ export default function UserCreatePage() {
                                 </Button>
                                 <Link href={'/pembelians'}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>

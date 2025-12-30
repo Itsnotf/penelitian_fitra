@@ -25,7 +25,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: barangs.index().url,
     },
     {
-        title: 'Create',
+        title: 'Buat',
         href: barangs.create().url,
     },
 ];

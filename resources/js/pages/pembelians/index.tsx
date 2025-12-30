@@ -123,7 +123,7 @@ export default function PembelianPage({ pembelians, filters, flash }: Props) {
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Detail
+                                                    Rincian 
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}

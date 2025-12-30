@@ -52,7 +52,7 @@ export default function PengajuanBarangsPage({ barangs, pengajuan, filters, flas
             href: `/pengajuans/${pengajuan.id}`,
         },
         {
-            title: 'Detail',
+            title: 'Rincian',
             href: `/pengajuans/${pengajuan.id}`,
         },
     ];
@@ -76,7 +76,7 @@ export default function PengajuanBarangsPage({ barangs, pengajuan, filters, flas
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Detail Pengajuan" />
+            <Head title="Rincian Pengajuan" />
 
             <div className="p-4 space-y-4">
 
@@ -94,7 +94,7 @@ export default function PengajuanBarangsPage({ barangs, pengajuan, filters, flas
                         <Link href={`/pengajuans/${pengajuan.id}/barangs/create`}>
                             <Button variant='default' className='group flex items-center'>
                                 <PlusCircle className='group-hover:rotate-90 transition-all' />
-                                Add Barang
+                                Tambah Barang
                             </Button>
                         </Link>
                     )}
@@ -106,7 +106,7 @@ export default function PengajuanBarangsPage({ barangs, pengajuan, filters, flas
                         <TableRow>
                             <TableHead>Nama Barang</TableHead>
                             <TableHead>Jumlah</TableHead>
-                            <TableHead>Action</TableHead>
+                            <TableHead>Tindakan</TableHead>
                         </TableRow>
                     </TableHeader>
 

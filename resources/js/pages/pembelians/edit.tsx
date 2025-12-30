@@ -21,7 +21,7 @@ export default function PembelianEditPage({ pembelian }: Props) {
             href: pembelians.index().url,
         },
         {
-            title: 'Edit',
+            title: 'Ubah',
             href: pembelians.edit(pembelian.id).url,
         },
     ];
@@ -102,12 +102,12 @@ export default function PembelianEditPage({ pembelian }: Props) {
                                             Updating...
                                         </>
                                     ) : (
-                                        'Update Pembelian'
+                                        'Perbarui Pembelian'
                                     )}
                                 </Button>
                                 <Link href={'/pembelians'}>
                                     <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Back
+                                        Kembali
                                     </Button>
                                 </Link>
                             </div>
