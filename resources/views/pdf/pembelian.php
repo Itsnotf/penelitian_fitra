@@ -166,7 +166,7 @@
             <tr>
                 <th style="width: 5%;">NO.</th>
                 <th style="width: 35%;">NAMA BARANG</th>
-                <th style="width: 10%;">SATUAN</th>
+                <th style="width: 10%;">TIPE</th>
                 <th style="width: 15%;">JUMLAH</th>
                 <th style="width: 25%;">HARGA TOTAL</th>
             </tr>
