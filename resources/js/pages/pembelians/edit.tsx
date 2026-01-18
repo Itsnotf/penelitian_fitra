@@ -81,6 +81,31 @@ export default function PembelianEditPage({ pembelian }: Props) {
                             </div>
 
                             <div className="grid gap-2">
+                                <Label htmlFor="dokumen">Dokumen Bukti Pembelian</Label>
+                                <Input
+                                    id="dokumen"
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                                    tabIndex={1}
+                                    name="dokumen"
+                                    placeholder="Pilih file dokumen (PDF, Word, atau Gambar)"
+                                    disabled={isFinished}
+                                />
+                                <p className="text-xs text-gray-500">
+                                    Format: PDF, DOC, DOCX, JPG, PNG, GIF (Max: 5MB)
+                                </p>
+                                {pembelian.dokumen && (
+                                    <p className="text-xs text-blue-600">
+                                        File saat ini: {pembelian.dokumen.split('/').pop()}
+                                    </p>
+                                )}
+                                <InputError
+                                    message={errors.dokumen}
+                                    className="mt-2"
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
                                 <Label>Status</Label>
                                 <div className="p-3 bg-gray-100 rounded-md">
                                     <span className={`inline-block px-3 py-1 rounded text-white text-sm font-semibold ${

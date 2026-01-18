@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import DeleteButton from '@/components/delete-button';
 import ChangeStatusButton from '@/components/change-status-button';
 import DownloadPdfLink from '@/components/download-pdf-link';
-import { Edit2Icon, Glasses, PlusCircle, WalletCards } from 'lucide-react';
+import { Edit2Icon, Glasses, PlusCircle, WalletCards, FileText, Eye } from 'lucide-react';
 import { BreadcrumbItem, Pembelian, SharedData } from '@/types';
 import { toast } from 'sonner';
 import {
@@ -93,6 +93,7 @@ export default function PembelianPage({ pembelians, filters, flash }: Props) {
                             <TableHead>Deskripsi</TableHead>
                             <TableHead>Total Harga</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Dokumen</TableHead>
                             <TableHead>Tindakan</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -114,6 +115,28 @@ export default function PembelianPage({ pembelians, filters, flash }: Props) {
                                     <TableCell>
                                         <Badge>{pembelian.status}</Badge>
                                     </TableCell>
+                                    <TableCell>
+                                        {pembelian.dokumen ? (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <a
+                                                        href={`/storage/${pembelian.dokumen}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <Button variant="outline" size="sm" className='hover:bg-green-200 hover:text-green-600'>
+                                                            <Eye size={16} />
+                                                        </Button>
+                                                    </a>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    Lihat Dokumen
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ) : (
+                                            <span className="text-xs text-gray-400">Belum ada</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="space-x-2">
                                         {hasAnyPermission(["pembelians show"]) && (
                                             <Tooltip>
@@ -123,14 +146,14 @@ export default function PembelianPage({ pembelians, filters, flash }: Props) {
                                                     </Link>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    Rincian 
+                                                    Rincian
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
                                         {hasAnyPermission(["pembelians show"]) && (
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                 <Button variant="outline" size="sm" className='hover:bg-blue-200 hover:text-blue-600'> 
+                                                 <Button variant="outline" size="sm" className='hover:bg-blue-200 hover:text-blue-600'>
                                                     <DownloadPdfLink id={pembelian.id} type="pembelians" />
                                                  </Button>
                                                 </TooltipTrigger>

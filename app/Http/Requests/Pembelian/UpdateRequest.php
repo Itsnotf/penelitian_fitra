@@ -24,6 +24,7 @@ class UpdateRequest extends FormRequest
         return [
             'vendor' => 'required|string|max:255',
             'deskripsi' => 'required|string|max:255',
+            'dokumen' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif|max:5120',
         ];
     }
 }

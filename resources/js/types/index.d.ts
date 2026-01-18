@@ -83,6 +83,7 @@ export interface Pembelian {
     vendor: string;
     deskripsi: string;
     status: string;
+    dokumen?: string;
     created_at: string;
     updated_at: string;
     user: User;

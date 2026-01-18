@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class PembeliansController extends Controller implements HasMiddleware
@@ -68,8 +69,16 @@ class PembeliansController extends Controller implements HasMiddleware
             'total_harga' => 0,
         ];
 
-        $finalData = $request->merge($data);
-        Pembelians::create($finalData->all());
+        // Handle file upload
+        if ($request->hasFile('dokumen')) {
+            $file = $request->file('dokumen');
+            $path = $file->store('pembelians', 'public');
+            $data['dokumen'] = $path;
+        }
+
+        // Merge validated data dengan custom data
+        $finalData = array_merge($request->validated(), $data);
+        Pembelians::create($finalData);
 
         return redirect()->route('pembelians.index')->with('success', 'Pembelian created successfully.');
     }
@@ -121,7 +130,22 @@ class PembeliansController extends Controller implements HasMiddleware
     public function update(UpdateRequest $request, string $id)
     {
         $pembelian = Pembelians::findOrFail($id);
-        $pembelian->update($request->validated());
+        $data = $request->validated();
+
+        // Handle file upload
+        if ($request->hasFile('dokumen')) {
+            // Delete old file if exists
+            if ($pembelian->dokumen && Storage::disk('public')->exists($pembelian->dokumen)) {
+                Storage::disk('public')->delete($pembelian->dokumen);
+            }
+            // Store new file
+            $file = $request->file('dokumen');
+            $path = $file->store('pembelians', 'public');
+            $data['dokumen'] = $path;
+        }
+
+        // Ensure only validated keys are updated
+        $pembelian->update(array_intersect_key($data, array_flip(['vendor', 'deskripsi', 'dokumen'])));
 
         return redirect()->route('pembelians.index')->with('success', 'Pembelian updated successfully.');
     }
@@ -142,7 +166,7 @@ class PembeliansController extends Controller implements HasMiddleware
     public function changeStatus(string $id)
     {
         $pembelian = Pembelians::findOrFail($id);
-        
+
         // Validasi: status finished tidak bisa diubah
         if ($pembelian->status === 'finished') {
             return redirect()->route('pembelians.index')->with('error', 'Status finished tidak dapat diubah.');
@@ -163,10 +187,10 @@ class PembeliansController extends Controller implements HasMiddleware
         $pembelian = Pembelians::with('barang_pembelians.barang', 'user')->findOrFail($id);
         // dd($pembelian);
         $html = view('pdf.pembelian', ['pembelian' => $pembelian])->render();
-        
+
         $pdf = Pdf::loadHTML($html);
         $pdf->setPaper('A4', 'portrait');
-        
+
         return $pdf->download("Laporan-Pembelian-{$pembelian->id}.pdf");
     }
 }
