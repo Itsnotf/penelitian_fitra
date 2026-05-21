@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Barang\StoreRequest;
 use App\Http\Requests\Barang\UpdateRequest;
+use App\Models\Barang_Pengajuan;
 use App\Models\Barangs;
+use App\Models\Pengajuans;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -29,11 +31,28 @@ class BarangsController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
+        $pengajuans = Pengajuans::with(['barang_pengajuans'])->get();
+
         $barangs = Barangs::when($request->search, function ($query, $search) {
             $query->where('nama_barang', 'like', "%{$search}%");
         })
             ->paginate(8)
             ->withQueryString();
+
+        foreach ($barangs as $barang) {
+            $jumlahPermintaan = 0;
+
+            foreach ($pengajuans as $pengajuan) {
+                foreach ($pengajuan->barang_pengajuans as $barangPengajuan) {
+                    if ($barangPengajuan->barang_id === $barang->id && $pengajuan->status === 'pending' && $pengajuan->urgensi !== 'mendesak') {
+                        $jumlahPermintaan += $barangPengajuan->jumlah;
+                    }
+                }
+            }
+
+            $barang->jumlah_permintaan = $jumlahPermintaan;
+        }
+
 
         return inertia('barangs/index', [
             'barangs' => $barangs,
@@ -111,10 +130,10 @@ class BarangsController extends Controller implements HasMiddleware
     {
         $barangs = Barangs::all();
         $html = view('pdf.barang', ['barangs' => $barangs])->render();
-        
+
         $pdf = Pdf::loadHTML($html);
         $pdf->setPaper('A4', 'portrait');
-        
+
         return $pdf->download('Laporan-Barang-' . date('Y-m-d') . '.pdf');
     }
 }

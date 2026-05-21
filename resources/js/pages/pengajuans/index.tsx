@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import DeleteButton from '@/components/delete-button';
 import ChangeStatusButton from '@/components/change-status-button';
 import RejectPengajuanButton from '@/components/reject-pengajuan-button';
+import ViewRejectReasonButton from '@/components/view-reject-reason-button';
 import { Edit2Icon, PlusCircle, WalletCards } from 'lucide-react';
-import { BreadcrumbItem, SharedData } from '@/types';
+import { BreadcrumbItem, Pengajuan, SharedData } from '@/types';
 import { toast } from 'sonner';
 import {
     Tooltip,
@@ -19,13 +20,6 @@ import hasAnyPermission from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import DownloadPdfLink from '@/components/download-pdf-link';
 
-interface Pengajuan {
-    id: number;
-    user: { name: string };
-    deskripsi: string;
-    status: 'pending' | 'approved' | 'rejected';
-    created_at: string;
-}
 
 interface Props {
     pengajuans: {
@@ -65,14 +59,20 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
         router.get('/pengajuans', { search }, { preserveState: true });
     };
 
-    const getStatusBadge = (status: string) => {
+    const getBadge = (status: string) => {
         switch (status) {
             case 'approved':
-                return <Badge className="bg-green-600">Approved</Badge>;
+                return <Badge className="bg-green-600 text-white">Approved</Badge>;
+            case 'biasa':
+                return <Badge className="bg-green-600 text-white">Biasa</Badge>;
+            case 'mendesak':
+                return <Badge className="bg-red-600 text-white">Mendesak</Badge>;
             case 'rejected':
-                return <Badge className="bg-red-600">Rejected</Badge>;
-            default:
-                return <Badge className="bg-yellow-600">Pending</Badge>;
+                return <Badge className="bg-red-600 text-white">Rejected</Badge>;
+            case 'pending':
+                return <Badge className="bg-yellow-600 text-white">Pending</Badge>;
+            case 'segera':
+                return <Badge className="bg-yellow-600 text-white">Segera</Badge>;
         }
     };
 
@@ -108,6 +108,7 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                         <TableRow>
                             <TableHead>Pengajuan Oleh</TableHead>
                             <TableHead>Deskripsi</TableHead>
+                            <TableHead>Urgensi</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Tanggal</TableHead>
                             <TableHead>Tindakan</TableHead>
@@ -127,7 +128,10 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                                     <TableCell>{pengajuan.user.name}</TableCell>
                                     <TableCell className="max-w-sm truncate">{pengajuan.deskripsi}</TableCell>
                                     <TableCell>
-                                        {getStatusBadge(pengajuan.status)}
+                                        {getBadge(pengajuan.urgensi)}
+                                    </TableCell>
+                                    <TableCell>
+                                        {getBadge(pengajuan.status)}
                                     </TableCell>
                                     <TableCell>{new Date(pengajuan.created_at).toLocaleDateString()}</TableCell>
                                     <TableCell className="space-x-2">
@@ -187,6 +191,17 @@ export default function PengajuanPage({ pengajuans, filters, flash }: Props) {
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     Tolak
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        )}
+
+                                        {pengajuan.status === 'rejected' && (
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    <ViewRejectReasonButton alasanReject={pengajuan.alasan_reject} />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    Alasan Penolakan
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}

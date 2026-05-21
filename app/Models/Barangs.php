@@ -23,6 +23,12 @@ class Barangs extends Model
         });
     }
 
+    public function barang_pengajuans()
+    {
+
+        return $this->hasMany(Barang_Pengajuan::class);
+    }
+
     /**
      * Hitung dan update stock_tersedia berdasarkan formula:
      * stock_tersedia = stock_awal + stock_masuk - stock_keluar
@@ -32,9 +38,9 @@ class Barangs extends Model
         $stockAwal = (int) $this->stock_awal;
         $stockMasuk = (int) $this->stock_masuk;
         $stockKeluar = (int) $this->stock_keluar;
-        
+
         $stockTersedia = $stockAwal + $stockMasuk - $stockKeluar;
-        
+
         // Update langsung tanpa trigger event lagi untuk menghindari loop
         $this->query()->where('id', $this->id)->update(['stock_tersedia' => $stockTersedia]);
     }

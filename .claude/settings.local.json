@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"d:\\\\Laravel\\\\Penelitian_FITRA\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(git config *)",
+      "Bash(Get-ChildItem -Path \"d:\\\\Laravel\\\\Penelitian_FITRA\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)"
+    ]
+  }
+}

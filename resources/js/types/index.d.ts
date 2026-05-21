@@ -72,6 +72,7 @@ export interface Barang {
     stock_masuk: string;
     stock_keluar: string;
     stock_tersedia: string;
+    jumlah_permintaan?: number;
     created_at: string;
     updated_at: string;
 }
@@ -105,7 +106,9 @@ export interface Pengajuan {
     id: number;
     user_id: number;
     deskripsi: string;
+    urgensi: 'biasa' | 'segera' | 'mendesak';
     status: 'pending' | 'approved' | 'rejected';
+    alasan_reject?: string | null;
     created_at: string;
     updated_at: string;
     user: User;

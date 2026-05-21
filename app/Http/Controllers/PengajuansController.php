@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Pengajuan\RejectRequest;
 use App\Http\Requests\Pengajuan\StoreRequest;
 use App\Http\Requests\Pengajuan\UpdateRequest;
 use App\Models\Barang_Pengajuan;
@@ -33,12 +34,23 @@ class PengajuansController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
-        $query = Pengajuans::with('user');
-        
+        $query = Pengajuans::with('user')
+            ->orderByRaw("CASE
+            WHEN status = 'approved' THEN 1
+            WHEN status = 'rejected' THEN 2
+            ELSE 0
+        END ASC")
+            ->orderByRaw("CASE urgensi
+            WHEN 'mendesak' THEN 1
+            WHEN 'segera'   THEN 2
+            WHEN 'biasa'    THEN 3
+            ELSE 4
+        END ASC");
+
         if ($request->user()?->roles()->where('name', 'User')->exists()) {
             $query->where('user_id', Auth::id());
         }
-        
+
         $pengajuans = $query->when($request->search, function ($query, $search) {
             $query->where('deskripsi', 'like', "%{$search}%");
         })
@@ -143,8 +155,9 @@ class PengajuansController extends Controller implements HasMiddleware
      */
     public function changeStatus(string $id)
     {
+
         $pengajuan = Pengajuans::findOrFail($id);
-        
+
         // Validasi: status approved/rejected tidak bisa diubah
         if ($pengajuan->status !== 'pending') {
             return redirect()->route('pengajuans.index')->with('error', 'Status tidak dapat diubah.');
@@ -154,16 +167,18 @@ class PengajuansController extends Controller implements HasMiddleware
         $pengajuan->status = 'approved';
         $pengajuan->save();
 
+
+
         return redirect()->route('pengajuans.index')->with('success', 'Pengajuan status berhasil diubah ke approved.');
     }
 
     /**
      * Reject pengajuan status
      */
-    public function rejectStatus(string $id)
+    public function rejectStatus(RejectRequest $request, string $id)
     {
         $pengajuan = Pengajuans::findOrFail($id);
-        
+
         // Validasi: status approved/rejected tidak bisa diubah
         if ($pengajuan->status !== 'pending') {
             return redirect()->route('pengajuans.index')->with('error', 'Status tidak dapat diubah.');
@@ -171,6 +186,7 @@ class PengajuansController extends Controller implements HasMiddleware
 
         // Ubah status ke rejected
         $pengajuan->status = 'rejected';
+        $pengajuan->alasan_reject = $request->alasan_reject;
         $pengajuan->save();
 
         return redirect()->route('pengajuans.index')->with('success', 'Pengajuan berhasil ditolak.');
@@ -182,12 +198,12 @@ class PengajuansController extends Controller implements HasMiddleware
     public function downloadPdf(string $id)
     {
         $pengajuan = Pengajuans::with('barang_pengajuans.barang', 'user')->findOrFail($id);
-        
+
         $html = view('pdf.pengajuan', ['pengajuan' => $pengajuan])->render();
-        
+
         $pdf = Pdf::loadHTML($html);
         $pdf->setPaper('A4', 'portrait');
-        
+
         return $pdf->download("Laporan-Pengajuan-{$pengajuan->id}.pdf");
     }
 }

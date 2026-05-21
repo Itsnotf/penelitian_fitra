@@ -1,12 +1,18 @@
-import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/app-layout';
-import { Link, Head, Form } from '@inertiajs/react';
-import { Input } from '@/components/ui/input';
-import { BreadcrumbItem } from '@/types';
 import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/app-layout';
+import { BreadcrumbItem } from '@/types';
+import { Form, Head, Link } from '@inertiajs/react';
 
 interface Props {
     // Empty props for create page
@@ -23,7 +29,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function PengajuanCreatePage({ }: Props) {
+export default function PengajuanCreatePage({}: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Buat Pengajuan" />
@@ -37,10 +43,12 @@ export default function PengajuanCreatePage({ }: Props) {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="deskripsi">Deskripsi Kebutuhan</Label>
+                                <Label htmlFor="deskripsi">
+                                    Deskripsi Kebutuhan
+                                </Label>
                                 <Textarea
                                     id="deskripsi"
-                                    className='min-h-40'
+                                    className="min-h-40"
                                     required
                                     autoFocus
                                     tabIndex={1}
@@ -54,7 +62,28 @@ export default function PengajuanCreatePage({ }: Props) {
                                 />
                             </div>
 
-                            <div className='space-x-2'>
+                            <div className="grid gap-2">
+                                <Label htmlFor="urgensi">Urgensi</Label>
+                                <Select name="urgensi" required>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a urgensi" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem key={'biasa'} value={'biasa'}>
+                                            Biasa
+                                        </SelectItem>
+                                        <SelectItem key={'segera'} value={'segera'}>
+                                            Segera
+                                        </SelectItem>
+                                        <SelectItem key={'mendesak'} value={'mendesak'}>
+                                            Mendesak
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.urgensi} />
+                            </div>
+
+                            <div className="space-x-2">
                                 <Button type="submit" className="mt-2 w-fit">
                                     {processing ? (
                                         <>
@@ -66,7 +95,11 @@ export default function PengajuanCreatePage({ }: Props) {
                                     )}
                                 </Button>
                                 <Link href={'/pengajuans'}>
-                                    <Button variant='outline' type="button" className="mt-2 w-fit">
+                                    <Button
+                                        variant="outline"
+                                        type="button"
+                                        className="mt-2 w-fit"
+                                    >
                                         Kembali
                                     </Button>
                                 </Link>

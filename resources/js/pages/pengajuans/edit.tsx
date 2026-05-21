@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Props {
     pengajuan: Pengajuan;
@@ -61,10 +62,31 @@ export default function PengajuanEditPage({ pengajuan }: Props) {
                             </div>
 
                             <div className="grid gap-2">
+                                <Label htmlFor="urgensi">Urgensi</Label>
+                                <Select name="urgensi" required defaultValue={pengajuan.urgensi}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a urgensi" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem key={'biasa'} value={'biasa'}>
+                                            Biasa
+                                        </SelectItem>
+                                        <SelectItem key={'segera'} value={'segera'}>
+                                            Segera
+                                        </SelectItem>
+                                        <SelectItem key={'mendesak'} value={'mendesak'}>
+                                            Mendesak
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.urgensi} />
+                            </div>
+
+                            <div className="grid gap-2">
                                 <Label>Status</Label>
                                 <div className="p-3 bg-gray-100 rounded-md">
                                     <span className={`inline-block px-3 py-1 rounded text-white text-sm font-semibold ${
-                                        pengajuan.status === 'approved' ? 'bg-green-600' : 
+                                        pengajuan.status === 'approved' ? 'bg-green-600' :
                                         pengajuan.status === 'rejected' ? 'bg-red-600' :
                                         'bg-yellow-600'
                                     }`}>
@@ -77,6 +99,7 @@ export default function PengajuanEditPage({ pengajuan }: Props) {
                                     <p className="text-sm text-yellow-600">Status sudah {pengajuan.status}, tidak dapat diubah</p>
                                 )}
                             </div>
+
 
                             <div className='space-x-2'>
                                 <Button type="submit" className="mt-2 w-fit" disabled={isLocked}>

@@ -23,6 +23,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'deskripsi' => 'required|string|max:1000',
+            'urgensi' => 'required|in:biasa,segera,mendesak',
         ];
     }
 }

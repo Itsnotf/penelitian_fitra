@@ -4,7 +4,7 @@ namespace App\Http\Requests\Pengajuan;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateRequest extends FormRequest
+class RejectRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,8 +22,7 @@ class UpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'deskripsi' => 'required|string|max:1000',
-            'urgensi' => 'required|in:biasa,segera,mendesak',
+            'alasan_reject' => 'required|string|max:255',
         ];
     }
 }

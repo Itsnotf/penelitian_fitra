@@ -101,9 +101,10 @@ export default function BarangPage({ barangs, filters, flash }: Props) {
                             <TableHead>Nama</TableHead>
                             <TableHead>Tipe</TableHead>
                             <TableHead>Stock Awal</TableHead>
-                            <TableHead>Stock Tersedia</TableHead>
                             <TableHead>Stock Masuk</TableHead>
                             <TableHead>Stock Keluar</TableHead>
+                            <TableHead>Stock Tersedia</TableHead>
+                            <TableHead>Jumlah Permintaan</TableHead>
                             <TableHead>Tindakan</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -121,9 +122,10 @@ export default function BarangPage({ barangs, filters, flash }: Props) {
                                     <TableCell>{barang.nama_barang}</TableCell>
                                     <TableCell>{barang.tipe}</TableCell>
                                     <TableCell>{barang.stock_awal}</TableCell>
-                                    <TableCell>{barang.stock_tersedia}</TableCell>
                                     <TableCell>{barang.stock_masuk}</TableCell>
                                     <TableCell>{barang.stock_keluar}</TableCell>
+                                    <TableCell>{barang.stock_tersedia}</TableCell>
+                                    <TableCell>{barang.jumlah_permintaan}</TableCell>
                                     <TableCell className="space-x-2">
                                         {hasAnyPermission(["barangs edit"]) && (
                                             <Tooltip>

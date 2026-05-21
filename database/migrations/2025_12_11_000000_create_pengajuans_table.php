@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->text('deskripsi');
+            $table->text('alasan_reject')->nullable();
+            $table->enum('urgensi', ['biasa', 'segera', 'mendesak'])->default('biasa');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
         });
