@@ -4,14 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Barang\StoreRequest;
 use App\Http\Requests\Barang\UpdateRequest;
-use App\Models\Barang_Pengajuan;
 use App\Models\Barangs;
-use App\Models\Pengajuans;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class BarangsController extends Controller implements HasMiddleware
 {
@@ -20,116 +18,78 @@ class BarangsController extends Controller implements HasMiddleware
         return [
             new Middleware('permission:barangs index', only: ['index']),
             new Middleware('permission:barangs create', only: ['create', 'store']),
-            new Middleware('permission:barangs edit', only: ['edit', 'update   ']),
+            new Middleware('permission:barangs edit', only: ['edit', 'update']),
             new Middleware('permission:barangs delete', only: ['destroy']),
             new Middleware('auth', only: ['downloadPdf']),
         ];
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-        $pengajuans = Pengajuans::with(['barang_pengajuans'])->get();
-
-        $barangs = Barangs::when($request->search, function ($query, $search) {
-            $query->where('nama_barang', 'like', "%{$search}%");
-        })
+        $barangs = Barangs::when($request->search, fn($q, $s) => $q->where('nama_barang', 'like', "%{$s}%"))
             ->paginate(8)
             ->withQueryString();
 
-        foreach ($barangs as $barang) {
-            $jumlahPermintaan = 0;
+        $hasJumlahPermintaan = Barangs::where('jumlah_permintaan', '>', 0)->exists();
+        $allStockSufficient  = !Barangs::where('jumlah_permintaan', '>', 0)
+            ->whereColumn('stock_tersedia', '<', 'jumlah_permintaan')
+            ->exists();
 
-            foreach ($pengajuans as $pengajuan) {
-                foreach ($pengajuan->barang_pengajuans as $barangPengajuan) {
-                    if ($barangPengajuan->barang_id === $barang->id && $pengajuan->status === 'pending' && $pengajuan->urgensi !== 'mendesak') {
-                        $jumlahPermintaan += $barangPengajuan->jumlah;
-                    }
-                }
-            }
-
-            $barang->jumlah_permintaan = $jumlahPermintaan;
-        }
-
-
-        return inertia('barangs/index', [
-            'barangs' => $barangs,
-            'filters' => $request->only('search'),
-            'flash' => [
-                'success' => session('success'),
+        return Inertia::render('barangs/index', [
+            'barangs'             => $barangs,
+            'filters'             => $request->only('search'),
+            'hasJumlahPermintaan' => $hasJumlahPermintaan,
+            'allStockSufficient'  => $allStockSufficient,
+            'flash'               => ['success' => session('success'), 'error' => session('error')],
+            'can'                 => [
+                'approveAllNormal'     => $request->user()?->can('pengajuans approve all normal'),
+                'buatPembelianSelisih' => $request->user()?->can('pengajuans buat pembelian selisih'),
             ],
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return Inertia::render('barangs/create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreRequest $request)
     {
-        Barangs::create($request->validated());
+        $data = $request->validated();
+        $data['stock_tersedia'] = (int) $data['stock_awal'];
+        $data['stock_masuk']    = 0;
+        $data['stock_keluar']   = 0;
 
-        return redirect()->route('barangs.index')->with('success', 'Barang created successfully.');
+        Barangs::create($data);
+
+        return redirect()->route('barangs.index')->with('success', 'Barang berhasil ditambahkan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Barangs $barangs)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         $barang = Barangs::findOrFail($id);
-        return Inertia::render('barangs/edit', [
-            'barang' => $barang,
-        ]);
+        return Inertia::render('barangs/edit', ['barang' => $barang]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateRequest $request, string $id)
     {
         $barang = Barangs::findOrFail($id);
         $barang->update($request->validated());
 
-        return redirect()->route('barangs.index')->with('success', 'Barang updated successfully.');
+        return redirect()->route('barangs.index')->with('success', 'Barang berhasil diperbarui.');
     }
 
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
-        $barang = Barangs::findOrFail($id);
-        $barang->delete();
+        Barangs::findOrFail($id)->delete();
 
-        return redirect()->route('barangs.index')->with('success', 'Barang deleted successfully.');
+        return redirect()->route('barangs.index')->with('success', 'Barang berhasil dihapus.');
     }
 
-    /**
-     * Download PDF laporan barang
-     */
     public function downloadPdf()
     {
         $barangs = Barangs::all();
-        $html = view('pdf.barang', ['barangs' => $barangs])->render();
+        $html    = view('pdf.barang', ['barangs' => $barangs])->render();
 
         $pdf = Pdf::loadHTML($html);
         $pdf->setPaper('A4', 'portrait');

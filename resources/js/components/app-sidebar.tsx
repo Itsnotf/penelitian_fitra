@@ -13,20 +13,20 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Box, Folder, KeyIcon, LayoutGrid, PackagePlus, User, Inbox } from 'lucide-react';
+import { Box, Inbox, KeyIcon, LayoutGrid, PackagePlus, Store, User } from 'lucide-react';
 import AppLogo from './app-logo';
-import users from '@/routes/users';
-import roles from '@/routes/roles';
 import barangs from '@/routes/barangs';
 import pembelians from '@/routes/pembelians';
 import pengajuans from '@/routes/pengajuans';
+import roles from '@/routes/roles';
+import users from '@/routes/users';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
-        permissions: ['dashboard']
+        permissions: ['dashboard'],
     },
 ];
 
@@ -53,6 +53,12 @@ const barangManagement: NavItem[] = [
         permissions: ['barangs index'],
     },
     {
+        title: 'Vendor',
+        href: '/vendors',
+        icon: Store,
+        permissions: ['vendors index'],
+    },
+    {
         title: 'Pembelian',
         href: pembelians.index(),
         icon: PackagePlus,
@@ -66,13 +72,7 @@ const barangManagement: NavItem[] = [
     },
 ];
 
-const footerNavItems: NavItem[] = [
-    // {
-    //     title: 'Repository',
-    //     href: 'https://github.com/laravel/react-starter-kit',
-    //     icon: Folder,
-    // },
-];
+const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
     return (
@@ -90,9 +90,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain section='Main' items={mainNavItems} />
-                <NavMain section='Management User' items={userManagement} />
-                <NavMain section='Management Inventaris' items={barangManagement} />
+                <NavMain section="Main" items={mainNavItems} />
+                <NavMain section="Management User" items={userManagement} />
+                <NavMain section="Management Inventaris" items={barangManagement} />
             </SidebarContent>
 
             <SidebarFooter>

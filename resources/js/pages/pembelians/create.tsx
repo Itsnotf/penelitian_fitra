@@ -1,124 +1,74 @@
-import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/app-layout';
-import { Link, Head, router, Form } from '@inertiajs/react';
-import { Input } from '@/components/ui/input';
-import pembelians, { store } from '@/routes/pembelians';
-import { BreadcrumbItem } from '@/types';
-
 import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/app-layout';
+import { BreadcrumbItem, Vendor } from '@/types';
+import { Form, Head, Link } from '@inertiajs/react';
+import pembelians, { store } from '@/routes/pembelians';
 
+interface Props {
+    vendors: Vendor[];
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Pembelian',
-        href: pembelians.index().url,
-    },
-    {
-        title: 'Buat',
-        href: pembelians.create().url,
-    },
+    { title: 'Pembelian', href: pembelians.index().url },
+    { title: 'Buat', href: pembelians.create().url },
 ];
 
-export default function UserCreatePage() {
-
-
+export default function PembelianCreatePage({ vendors }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Barang" />
-            <Form
-                {...store.form()}
-                disableWhileProcessing
-                className="flex flex-col gap-6 p-4"
-            >
+            <Head title="Buat Pembelian" />
+            <Form {...store.form()} disableWhileProcessing className="flex flex-col gap-6 p-4">
                 {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="vendor">Nama Vendor</Label>
-                                <Input
-                                    id="vendor"
-                                    type="text"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="vendor"
-                                    name="vendor"
-                                    placeholder="(e.g., PT. Sumber Rejeki)"
-                                />
-                                <InputError
-                                    message={errors.vendor}
-                                    className="mt-2"
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="deskripsi">Deskripsi</Label>
-                                <Textarea
-                                    id="deskripsi"
-                                    className='min-h-40'
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="deskripsi"
-                                    name="deskripsi"
-                                    placeholder="(e.g., Jelaskan secara singkat keterangan pembelian)"
-                                />
-                                <InputError
-                                    message={errors.deskripsi}
-                                    className="mt-2"
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="dokumen">Dokumen Bukti Pembelian</Label>
-                                <Input
-                                    id="dokumen"
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
-                                    tabIndex={1}
-                                    name="dokumen"
-                                    placeholder="Pilih file dokumen (PDF, Word, atau Gambar)"
-                                />
-                                <p className="text-xs text-gray-500">
-                                    Format: PDF, DOC, DOCX, JPG, PNG, GIF (Max: 5MB)
-                                </p>
-                                <InputError
-                                    message={errors.dokumen}
-                                    className="mt-2"
-                                />
-                            </div>
-
-                            <div className='space-x-2'>
-                                <Button type="submit" className="mt-2 w-fit">
-                                    {processing ? (
-                                        <>
-                                            <Spinner className="mr-2" />
-                                            Creating...
-                                        </>
+                    <div className="grid gap-6 max-w-lg">
+                        <div className="grid gap-2">
+                            <Label htmlFor="vendor_id">Vendor</Label>
+                            <Select name="vendor_id">
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih vendor (opsional)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {vendors.length === 0 ? (
+                                        <SelectItem value="0" disabled>Belum ada vendor terdaftar</SelectItem>
                                     ) : (
-                                        'Buat Pembelian'
+                                        vendors.map((v) => (
+                                            <SelectItem key={v.id} value={v.id.toString()}>{v.nama_vendor}</SelectItem>
+                                        ))
                                     )}
-                                </Button>
-                                <Link href={'/pembelians'}>
-                                    <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Kembali
-                                    </Button>
-                                </Link>
-                            </div>
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">Opsional — dapat diisi setelah pembelian dibuat.</p>
+                            <InputError message={errors.vendor_id} />
                         </div>
-                    </>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="deskripsi">Deskripsi</Label>
+                            <Textarea id="deskripsi" name="deskripsi" className="min-h-32" required autoFocus
+                                placeholder="Jelaskan keperluan pembelian ini..." />
+                            <InputError message={errors.deskripsi} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="dokumen">Dokumen Bukti Pembelian</Label>
+                            <Input id="dokumen" name="dokumen" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" />
+                            <p className="text-xs text-muted-foreground">Format: PDF, DOC, DOCX, JPG, PNG, GIF (Maks: 5MB)</p>
+                            <InputError message={errors.dokumen} />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button type="submit" disabled={processing}>
+                                {processing ? <><Spinner className="mr-2" /> Membuat...</> : 'Buat Pembelian'}
+                            </Button>
+                            <Link href="/pembelians">
+                                <Button variant="outline" type="button">Kembali</Button>
+                            </Link>
+                        </div>
+                    </div>
                 )}
             </Form>
         </AppLayout>

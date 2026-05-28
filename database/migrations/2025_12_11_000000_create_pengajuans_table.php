@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('pengajuans', function (Blueprint $table) {
@@ -16,15 +13,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->text('deskripsi');
             $table->text('alasan_reject')->nullable();
-            $table->enum('urgensi', ['biasa', 'segera', 'mendesak'])->default('biasa');
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('urgensi', ['normal', 'mendesak'])->default('normal');
+            $table->enum('status', ['pending', 'proses', 'selesai', 'rejected'])->default('pending');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('pengajuans');

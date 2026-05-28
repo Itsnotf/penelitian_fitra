@@ -42,17 +42,17 @@ export interface User {
     created_at: string;
     updated_at: string;
     roles?: Role;
-    [key: string]: unknown; // This allows for additional properties...
+    [key: string]: unknown;
 }
 
-    export interface Permission {
-        id: number;
-        name: string;
-        guard_name: string;
-        created_at: string;
-        updated_at: string;
-        [key: string]: boolean;
-    }
+export interface Permission {
+    id: number;
+    name: string;
+    guard_name: string;
+    created_at: string;
+    updated_at: string;
+    [key: string]: boolean;
+}
 
 export interface Role {
     id: number;
@@ -63,16 +63,39 @@ export interface Role {
     permissions?: Permission[];
 }
 
+export interface Vendor {
+    id: number;
+    nama_vendor: string;
+    alamat?: string | null;
+    telepon?: string | null;
+    email?: string | null;
+    created_at: string;
+    updated_at: string;
+    barang_vendors_count?: number;
+}
+
+export interface BarangVendor {
+    id: number;
+    vendor_id: number;
+    barang_id: number;
+    harga: number;
+    terakhir_update_harga?: string | null;
+    created_at: string;
+    updated_at: string;
+    vendor?: Vendor;
+    barang?: Barang;
+}
 
 export interface Barang {
     id: number;
     nama_barang: string;
     tipe: string;
-    stock_awal: string;
-    stock_masuk: string;
-    stock_keluar: string;
-    stock_tersedia: string;
-    jumlah_permintaan?: number;
+    satuan: string;
+    stock_awal: number;
+    stock_masuk: number;
+    stock_keluar: number;
+    stock_tersedia: number;
+    jumlah_permintaan: number;
     created_at: string;
     updated_at: string;
 }
@@ -80,11 +103,13 @@ export interface Barang {
 export interface Pembelian {
     id: number;
     user_id: number;
-    total_harga: string;
-    vendor: string;
+    vendor_id?: number | null;
+    pengajuan_id?: number | null;
+    total_harga: number;
+    vendor?: Vendor | null;
     deskripsi: string;
-    status: string;
-    dokumen?: string;
+    status: 'pending' | 'proses' | 'selesai';
+    dokumen?: string | null;
     created_at: string;
     updated_at: string;
     user: User;
@@ -94,8 +119,8 @@ export interface BarangPembelian {
     id: number;
     pembelian_id: number;
     barang_id: number;
-    harga: string;
-    jumlah: string;
+    harga: number;
+    jumlah: number;
     created_at: string;
     updated_at: string;
     barang?: Barang;
@@ -106,8 +131,8 @@ export interface Pengajuan {
     id: number;
     user_id: number;
     deskripsi: string;
-    urgensi: 'biasa' | 'segera' | 'mendesak';
-    status: 'pending' | 'approved' | 'rejected';
+    urgensi: 'normal' | 'mendesak';
+    status: 'pending' | 'proses' | 'selesai' | 'rejected';
     alasan_reject?: string | null;
     created_at: string;
     updated_at: string;

@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Pembelian\StoreRequest;
-use App\Http\Requests\Pembelian\UpdateRequest;
-use App\Models\Barang_Pembelian;
+use App\Models\BarangVendor;
 use App\Models\Pembelians;
+use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -16,7 +15,6 @@ use Inertia\Inertia;
 
 class PembeliansController extends Controller implements HasMiddleware
 {
-
     public static function middleware()
     {
         return [
@@ -29,164 +27,154 @@ class PembeliansController extends Controller implements HasMiddleware
             new Middleware('permission:pembelians show', only: ['downloadPdf']),
         ];
     }
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index(Request $request)
     {
-        $pembelians = Pembelians::with('user')->when($request->search, function ($query, $search) {
-            $query->where('vendor', 'like', "%{$search}%");
-        })
+        $pembelians = Pembelians::with('user', 'vendor')
+            ->when($request->search, fn($q, $s) => $q
+                ->whereHas('vendor', fn($v) => $v->where('nama_vendor', 'like', "%{$s}%"))
+                ->orWhere('deskripsi', 'like', "%{$s}%"))
+            ->latest()
             ->paginate(8)
             ->withQueryString();
 
-        return inertia('pembelians/index', [
+        return Inertia::render('pembelians/index', [
             'pembelians' => $pembelians,
-            'filters' => $request->only('search'),
-            'flash' => [
-                'success' => session('success'),
-            ],
+            'filters'    => $request->only('search'),
+            'flash'      => ['success' => session('success'), 'error' => session('error')],
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        return Inertia::render('pembelians/create');
+        $vendors = Vendor::all(['id', 'nama_vendor']);
+        return Inertia::render('pembelians/create', ['vendors' => $vendors]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreRequest $request)
+    public function store(Request $request)
     {
-        $user = Auth::user();
-        $data = [
-            'user_id' => $user->id,
-            'status' => 'pending',
-            'total_harga' => 0,
-        ];
+        $validated = $request->validate([
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'deskripsi' => 'required|string|max:255',
+            'dokumen'   => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif|max:5120',
+        ]);
 
-        // Handle file upload
+        $data = array_merge($validated, [
+            'user_id'     => Auth::id(),
+            'status'      => 'pending',
+            'total_harga' => 0,
+        ]);
+
         if ($request->hasFile('dokumen')) {
-            $file = $request->file('dokumen');
-            $path = $file->store('pembelians', 'public');
-            $data['dokumen'] = $path;
+            $data['dokumen'] = $request->file('dokumen')->store('pembelians', 'public');
         }
 
-        // Merge validated data dengan custom data
-        $finalData = array_merge($request->validated(), $data);
-        Pembelians::create($finalData);
+        Pembelians::create($data);
 
-        return redirect()->route('pembelians.index')->with('success', 'Pembelian created successfully.');
+        return redirect()->route('pembelians.index')->with('success', 'Pembelian berhasil dibuat.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $pembelian_id, Request $request)
     {
-        $barangs = Barang_Pembelian::with('barang', 'pembelian')
-            ->when($request->search, function ($query, $search) {
-                $query->whereHas('barang', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-                $query->whereHas('pembelian', function ($q) use ($search) {
-                    $q->where('vendor', 'like', "%{$search}%");
-                });
+        $barangs = \App\Models\Barang_Pembelian::with('barang', 'pembelian')
+            ->when($request->search, function ($q, $s) {
+                $q->whereHas('barang', fn($b) => $b->where('nama_barang', 'like', "%{$s}%"));
             })
             ->where('pembelian_id', $pembelian_id)
             ->paginate(8)
             ->withQueryString();
 
-        $pembelian = Pembelians::findOrFail($pembelian_id);
+        $pembelian = Pembelians::with('vendor')->findOrFail($pembelian_id);
 
-        return inertia('pembelians/barangs/index', [
-            'barangs' => $barangs,
+        return Inertia::render('pembelians/barangs/index', [
+            'barangs'   => $barangs,
             'pembelian' => $pembelian,
-            'filters' => $request->only('search'),
-            'flash' => [
-                'success' => session('success'),
-            ],
+            'filters'   => $request->only('search'),
+            'flash'     => ['success' => session('success')],
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         $pembelian = Pembelians::findOrFail($id);
+        $vendors   = Vendor::all(['id', 'nama_vendor']);
+
         return Inertia::render('pembelians/edit', [
             'pembelian' => $pembelian,
+            'vendors'   => $vendors,
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateRequest $request, string $id)
+    public function update(Request $request, string $id)
     {
         $pembelian = Pembelians::findOrFail($id);
-        $data = $request->validated();
 
-        // Handle file upload
+        $validated = $request->validate([
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'deskripsi' => 'required|string|max:255',
+            'dokumen'   => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif|max:5120',
+        ]);
+
         if ($request->hasFile('dokumen')) {
-            // Delete old file if exists
             if ($pembelian->dokumen && Storage::disk('public')->exists($pembelian->dokumen)) {
                 Storage::disk('public')->delete($pembelian->dokumen);
             }
-            // Store new file
-            $file = $request->file('dokumen');
-            $path = $file->store('pembelians', 'public');
-            $data['dokumen'] = $path;
+            $validated['dokumen'] = $request->file('dokumen')->store('pembelians', 'public');
         }
 
-        // Ensure only validated keys are updated
-        $pembelian->update(array_intersect_key($data, array_flip(['vendor', 'deskripsi', 'dokumen'])));
+        $vendorChanged = isset($validated['vendor_id']) && $validated['vendor_id'] != $pembelian->vendor_id;
 
-        return redirect()->route('pembelians.index')->with('success', 'Pembelian updated successfully.');
+        $pembelian->update(array_filter($validated, fn($v) => $v !== null || array_key_exists('vendor_id', $validated)));
+
+        if ($vendorChanged && $validated['vendor_id']) {
+            $this->syncHargaFromVendor($pembelian->fresh());
+        }
+
+        return redirect()->route('pembelians.index')->with('success', 'Pembelian berhasil diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    private function syncHargaFromVendor(Pembelians $pembelian): void
+    {
+        foreach ($pembelian->barang_pembelians as $bp) {
+            $vendorBarang = BarangVendor::where('vendor_id', $pembelian->vendor_id)
+                ->where('barang_id', $bp->barang_id)
+                ->first();
+
+            if ($vendorBarang) {
+                $bp->update(['harga' => $vendorBarang->harga]);
+            }
+        }
+    }
+
     public function destroy(string $id)
     {
-        $pembelian = Pembelians::findOrFail($id);
-        $pembelian->delete();
-        return redirect()->route('pembelians.index')->with('success', 'Pembelian deleted successfully.');
+        Pembelians::findOrFail($id)->delete();
+
+        return redirect()->route('pembelians.index')->with('success', 'Pembelian berhasil dihapus.');
     }
 
-    /**
-     * Change pembelian status
-     */
     public function changeStatus(string $id)
     {
         $pembelian = Pembelians::findOrFail($id);
 
-        // Validasi: status finished tidak bisa diubah
-        if ($pembelian->status === 'finished') {
-            return redirect()->route('pembelians.index')->with('error', 'Status finished tidak dapat diubah.');
+        if ($pembelian->status === 'selesai') {
+            return redirect()->route('pembelians.index')
+                ->with('error', 'Status selesai tidak dapat diubah.');
         }
 
-        // Ubah status ke finished
-        $pembelian->status = 'finished';
+        $newStatus = $pembelian->status === 'pending' ? 'proses' : 'selesai';
+        $pembelian->status = $newStatus;
         $pembelian->save();
 
-        return redirect()->route('pembelians.index')->with('success', 'Pembelian status berhasil diubah ke finished.');
+        $msg = $newStatus === 'proses' ? 'Pembelian ditandai sedang diproses.' : 'Pembelian ditandai selesai.';
+
+        return redirect()->route('pembelians.index')->with('success', $msg);
     }
 
-    /**
-     * Download pembelian as PDF
-     */
     public function downloadPdf(string $id)
     {
-        $pembelian = Pembelians::with('barang_pembelians.barang', 'user')->findOrFail($id);
-        // dd($pembelian);
-        $html = view('pdf.pembelian', ['pembelian' => $pembelian])->render();
+        $pembelian = Pembelians::with('barang_pembelians.barang', 'user', 'vendor')->findOrFail($id);
+        $html      = view('pdf.pembelian', ['pembelian' => $pembelian])->render();
 
         $pdf = Pdf::loadHTML($html);
         $pdf->setPaper('A4', 'portrait');

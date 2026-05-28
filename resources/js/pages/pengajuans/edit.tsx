@@ -1,125 +1,73 @@
-import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/app-layout';
-import { Link, Head, Form } from '@inertiajs/react';
-import { Input } from '@/components/ui/input';
-import { BreadcrumbItem, Pengajuan } from '@/types';
 import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AppLayout from '@/layouts/app-layout';
+import { BreadcrumbItem, Pengajuan } from '@/types';
+import { Form, Head, Link } from '@inertiajs/react';
 
 interface Props {
     pengajuan: Pengajuan;
 }
 
+const statusLabel: Record<string, string> = {
+    pending: 'Pending', proses: 'Diproses', selesai: 'Selesai', rejected: 'Ditolak',
+};
+
 export default function PengajuanEditPage({ pengajuan }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: 'Pengajuan',
-            href: '/pengajuans',
-        },
-        {
-            title: 'Ubah',
-            href: `/pengajuans/${pengajuan.id}/edit`,
-        },
+        { title: 'Pengajuan', href: '/pengajuans' },
+        { title: 'Ubah', href: `/pengajuans/${pengajuan.id}/edit` },
     ];
 
-    // Status yang sudah approved/rejected tidak bisa diedit
     const isLocked = pengajuan.status !== 'pending';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Ubah Pengajuan" />
-            <Form
-                method="put"
-                action={`/pengajuans/${pengajuan.id}`}
-                disableWhileProcessing
-                className="flex flex-col gap-6 p-4"
-            >
+            <Form method="put" action={`/pengajuans/${pengajuan.id}`} disableWhileProcessing className="flex flex-col gap-6 p-4">
                 {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="deskripsi">Deskripsi Kebutuhan</Label>
-                                <Textarea
-                                    id="deskripsi"
-                                    className='min-h-40'
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="deskripsi"
-                                    name="deskripsi"
-                                    defaultValue={pengajuan.deskripsi}
-                                    placeholder="(e.g., Butuh laptop untuk meeting dengan klien)"
-                                    disabled={isLocked}
-                                />
-                                <InputError
-                                    message={errors.deskripsi}
-                                    className="mt-2"
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="urgensi">Urgensi</Label>
-                                <Select name="urgensi" required defaultValue={pengajuan.urgensi}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a urgensi" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem key={'biasa'} value={'biasa'}>
-                                            Biasa
-                                        </SelectItem>
-                                        <SelectItem key={'segera'} value={'segera'}>
-                                            Segera
-                                        </SelectItem>
-                                        <SelectItem key={'mendesak'} value={'mendesak'}>
-                                            Mendesak
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={errors.urgensi} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label>Status</Label>
-                                <div className="p-3 bg-gray-100 rounded-md">
-                                    <span className={`inline-block px-3 py-1 rounded text-white text-sm font-semibold ${
-                                        pengajuan.status === 'approved' ? 'bg-green-600' :
-                                        pengajuan.status === 'rejected' ? 'bg-red-600' :
-                                        'bg-yellow-600'
-                                    }`}>
-                                        {pengajuan.status === 'approved' ? 'Approved' :
-                                         pengajuan.status === 'rejected' ? 'Rejected' :
-                                         'Pending'}
-                                    </span>
-                                </div>
-                                {isLocked && (
-                                    <p className="text-sm text-yellow-600">Status sudah {pengajuan.status}, tidak dapat diubah</p>
-                                )}
-                            </div>
-
-
-                            <div className='space-x-2'>
-                                <Button type="submit" className="mt-2 w-fit" disabled={isLocked}>
-                                    {processing ? (
-                                        <>
-                                            <Spinner className="mr-2" />
-                                            Updating...
-                                        </>
-                                    ) : (
-                                        'Perbarui Pengajuan'
-                                    )}
-                                </Button>
-                                <Link href={'/pengajuans'}>
-                                    <Button variant='outline' type="button" className="mt-2 w-fit">
-                                        Kembali
-                                    </Button>
-                                </Link>
-                            </div>
+                    <div className="grid gap-6 max-w-lg">
+                        <div className="grid gap-2">
+                            <Label htmlFor="deskripsi">Deskripsi Kebutuhan</Label>
+                            <Textarea id="deskripsi" name="deskripsi" className="min-h-40" required autoFocus
+                                defaultValue={pengajuan.deskripsi} disabled={isLocked} />
+                            <InputError message={errors.deskripsi} />
                         </div>
-                    </>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="urgensi">Urgensi</Label>
+                            <Select name="urgensi" defaultValue={pengajuan.urgensi} required disabled={isLocked}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih urgensi" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="mendesak">Mendesak</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError message={errors.urgensi} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label>Status</Label>
+                            <div className="rounded-md border bg-muted/30 p-3 text-sm font-medium">
+                                {statusLabel[pengajuan.status] ?? pengajuan.status}
+                            </div>
+                            {isLocked && <p className="text-sm text-muted-foreground">Pengajuan sudah diproses dan tidak dapat diubah.</p>}
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button type="submit" disabled={isLocked || processing}>
+                                {processing ? <><Spinner className="mr-2" /> Menyimpan...</> : 'Perbarui Pengajuan'}
+                            </Button>
+                            <Link href="/pengajuans">
+                                <Button variant="outline" type="button">Kembali</Button>
+                            </Link>
+                        </div>
+                    </div>
                 )}
             </Form>
         </AppLayout>
