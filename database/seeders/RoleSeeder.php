@@ -10,9 +10,10 @@ class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin      = Role::create(['name' => 'Admin']);
-        $tataKelola = Role::create(['name' => 'Tata Kelola']);
-        $user       = Role::create(['name' => 'User']);
+        $admin        = Role::create(['name' => 'Admin']);
+        $tataKelola   = Role::create(['name' => 'Tata Kelola']);
+        $kepalaBidang = Role::create(['name' => 'Kepala Bidang']);
+        $user         = Role::create(['name' => 'User']);
 
         $admin->givePermissionTo(Permission::all());
 
@@ -26,6 +27,13 @@ class RoleSeeder extends Seeder
             'pembelians barang create', 'pembelians barang edit', 'pembelians barang delete',
             'pengajuans index', 'pengajuans show', 'pengajuans change status',
             'pengajuans approve all normal', 'pengajuans buat pembelian selisih',
+        ]);
+
+        $kepalaBidang->givePermissionTo([
+            'dashboard',
+            'barangs index',
+            'pengajuans index', 'pengajuans show', 'pengajuans change status',
+            'pembelians index', 'pembelians show',
         ]);
 
         $user->givePermissionTo([

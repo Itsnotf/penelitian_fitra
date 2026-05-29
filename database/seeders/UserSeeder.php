@@ -21,6 +21,12 @@ class UserSeeder extends Seeder
         );
         $tataKelola->assignRole('Tata Kelola');
 
+        $kepalaBidang = User::firstOrCreate(
+            ['email' => 'kepalabidang@gmail.com'],
+            ['name' => 'Kepala Bidang', 'password' => bcrypt('password'), 'email_verified_at' => now()]
+        );
+        $kepalaBidang->assignRole('Kepala Bidang');
+
         User::factory(5)->create()->each(fn($u) => $u->assignRole('User'));
     }
 }
