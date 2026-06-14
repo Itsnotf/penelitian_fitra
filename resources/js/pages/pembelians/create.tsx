@@ -12,6 +12,7 @@ import pembelians, { store } from '@/routes/pembelians';
 import { Barang, BreadcrumbItem, Vendor } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface Props {
     vendors: Pick<Vendor, 'id' | 'nama_vendor'>[];
@@ -42,6 +43,18 @@ export default function PembelianCreatePage({ vendors, barangs, allVendorPrices 
         dokumen: null,
         items: [{ barang_id: '', jumlah: 1, harga: 0 }],
     });
+
+    const [filterTipe, setFilterTipe] = useState<string>('_semua');
+
+    const tipeOptions = [...new Set(barangs.map((b) => b.tipe))].sort();
+
+    const getBarangsForRow = (currentBarangId: string) =>
+        barangs.filter(
+            (b) =>
+                filterTipe === '_semua' ||
+                b.tipe === filterTipe ||
+                b.id.toString() === currentBarangId,
+        );
 
     const handleVendorChange = (vendorId: string) => {
         setData((prev) => ({
@@ -133,8 +146,25 @@ export default function PembelianCreatePage({ vendors, barangs, allVendorPrices 
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                    <Label>Daftar Barang</Label>
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between max-w-4xl">
+                        <Label>Daftar Barang</Label>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">Filter tipe:</span>
+                            <Select value={filterTipe} onValueChange={setFilterTipe}>
+                                <SelectTrigger className="w-44">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="_semua">Semua tipe</SelectItem>
+                                    {tipeOptions.map((tipe) => (
+                                        <SelectItem key={tipe} value={tipe}>{tipe}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
                     {(errors as Record<string, string>).items && (
                         <InputError message={(errors as Record<string, string>).items} />
                     )}
@@ -153,6 +183,7 @@ export default function PembelianCreatePage({ vendors, barangs, allVendorPrices 
                             <TableBody>
                                 {data.items.map((item, index) => {
                                     const selectedBarang = barangs.find((b) => b.id.toString() === item.barang_id);
+                                    const rowBarangs = getBarangsForRow(item.barang_id);
                                     const isVendorPrice =
                                         data.vendor_id &&
                                         item.barang_id &&
@@ -169,18 +200,24 @@ export default function PembelianCreatePage({ vendors, barangs, allVendorPrices 
                                                         <SelectValue placeholder="Pilih barang..." />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {barangs.map((b) => (
-                                                            <SelectItem
-                                                                key={b.id}
-                                                                value={b.id.toString()}
-                                                                disabled={
-                                                                    selectedBarangIds.includes(b.id.toString()) &&
-                                                                    item.barang_id !== b.id.toString()
-                                                                }
-                                                            >
-                                                                {b.nama_barang}
-                                                            </SelectItem>
-                                                        ))}
+                                                        {rowBarangs.length === 0 ? (
+                                                            <div className="py-2 px-3 text-sm text-muted-foreground">
+                                                                Tidak ada barang untuk tipe ini.
+                                                            </div>
+                                                        ) : (
+                                                            rowBarangs.map((b) => (
+                                                                <SelectItem
+                                                                    key={b.id}
+                                                                    value={b.id.toString()}
+                                                                    disabled={
+                                                                        selectedBarangIds.includes(b.id.toString()) &&
+                                                                        item.barang_id !== b.id.toString()
+                                                                    }
+                                                                >
+                                                                    {b.nama_barang}
+                                                                </SelectItem>
+                                                            ))
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
                                                 <InputError message={(errors as Record<string, string>)[`items.${index}.barang_id`]} />
