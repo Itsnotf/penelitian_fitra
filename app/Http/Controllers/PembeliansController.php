@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BarangVendor;
+use App\Models\Barangs;
 use App\Models\Pembelians;
 use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -47,29 +48,63 @@ class PembeliansController extends Controller implements HasMiddleware
 
     public function create()
     {
-        $vendors = Vendor::all(['id', 'nama_vendor']);
-        return Inertia::render('pembelians/create', ['vendors' => $vendors]);
+        $vendors = Vendor::orderBy('nama_vendor')->get(['id', 'nama_vendor']);
+        $barangs = Barangs::orderBy('nama_barang')->get(['id', 'nama_barang', 'satuan', 'tipe']);
+
+        $allVendorPrices = BarangVendor::all(['vendor_id', 'barang_id', 'harga'])
+            ->groupBy('vendor_id')
+            ->map(fn($items) => $items->keyBy('barang_id')->map(fn($bv) => $bv->harga));
+
+        return Inertia::render('pembelians/create', [
+            'vendors'         => $vendors,
+            'barangs'         => $barangs,
+            'allVendorPrices' => $allVendorPrices,
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'vendor_id' => 'nullable|exists:vendors,id',
-            'deskripsi' => 'required|string|max:255',
-            'dokumen'   => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif|max:5120',
+            'vendor_id'          => 'nullable|exists:vendors,id',
+            'deskripsi'          => 'required|string|max:255',
+            'dokumen'            => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif|max:5120',
+            'items'              => 'required|array|min:1',
+            'items.*.barang_id'  => 'required|exists:barangs,id',
+            'items.*.jumlah'     => 'required|integer|min:1',
+            'items.*.harga'      => 'required|integer|min:0',
+        ], [
+            'items.required'             => 'Minimal tambahkan 1 barang.',
+            'items.min'                  => 'Minimal tambahkan 1 barang.',
+            'items.*.barang_id.required' => 'Pilih barang.',
+            'items.*.jumlah.required'    => 'Jumlah wajib diisi.',
+            'items.*.jumlah.min'         => 'Jumlah minimal 1.',
+            'items.*.harga.required'     => 'Harga wajib diisi.',
+            'items.*.harga.min'          => 'Harga tidak boleh negatif.',
         ]);
 
-        $data = array_merge($validated, [
-            'user_id'     => Auth::id(),
-            'status'      => 'pending',
-            'total_harga' => 0,
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated) {
+            $pembelianData = [
+                'user_id'     => Auth::id(),
+                'vendor_id'   => $validated['vendor_id'] ?? null,
+                'status'      => 'pending',
+                'total_harga' => 0,
+                'deskripsi'   => $validated['deskripsi'],
+            ];
 
-        if ($request->hasFile('dokumen')) {
-            $data['dokumen'] = $request->file('dokumen')->store('pembelians', 'public');
-        }
+            if ($request->hasFile('dokumen')) {
+                $pembelianData['dokumen'] = $request->file('dokumen')->store('pembelians', 'public');
+            }
 
-        Pembelians::create($data);
+            $pembelian = Pembelians::create($pembelianData);
+
+            foreach ($validated['items'] as $item) {
+                $pembelian->barang_pembelians()->create([
+                    'barang_id' => $item['barang_id'],
+                    'jumlah'    => $item['jumlah'],
+                    'harga'     => $item['harga'],
+                ]);
+            }
+        });
 
         return redirect()->route('pembelians.index')->with('success', 'Pembelian berhasil dibuat.');
     }

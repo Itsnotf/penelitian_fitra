@@ -96,6 +96,12 @@
         Laporan Data Barang
     </div>
 
+    <?php if ($filterInfo !== 'Semua barang'): ?>
+    <div style="text-align:center; font-size:11px; margin-bottom:12px; color:#555;">
+        Filter: <?php echo htmlspecialchars($filterInfo); ?>
+    </div>
+    <?php endif; ?>
+
     <table class="table-data">
         <thead>
             <tr>

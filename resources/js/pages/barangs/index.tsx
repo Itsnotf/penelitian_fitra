@@ -4,8 +4,8 @@ import AppLayout from '@/layouts/app-layout';
 import { Link, Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import BarangDownloadFilter from '@/components/barang-download-filter';
 import DeleteButton from '@/components/delete-button';
-import DownloadPdfLink from '@/components/download-pdf-link';
 import { AlertTriangle, CheckCircle2, Edit2Icon, PlusCircle, ShoppingCart } from 'lucide-react';
 import { Barang, BreadcrumbItem } from '@/types';
 import { toast } from 'sonner';
@@ -31,11 +31,12 @@ interface Props {
     allStockSufficient: boolean;
     flash?: { success?: string; error?: string };
     can: { approveAllNormal: boolean; buatPembelianSelisih: boolean };
+    tipeOptions: string[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Inventaris', href: '/barangs' }];
 
-export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaan, allStockSufficient, can }: Props) {
+export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaan, allStockSufficient, can, tipeOptions }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [shownMessages] = useState(new Set<string>());
 
@@ -83,14 +84,7 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
                         </Link>
                     )}
 
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="outline" size="default">
-                                <DownloadPdfLink type="barangs" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Laporan Barang</TooltipContent>
-                    </Tooltip>
+                    <BarangDownloadFilter tipeOptions={tipeOptions} />
 
                     {can.approveAllNormal && hasJumlahPermintaan && (
                         <AlertDialog>

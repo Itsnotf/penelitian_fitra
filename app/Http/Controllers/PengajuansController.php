@@ -66,17 +66,31 @@ class PengajuansController extends Controller implements HasMiddleware
 
     public function create()
     {
-        return Inertia::render('pengajuans/create');
+        $barangs = Barangs::orderBy('nama_barang')->get(['id', 'nama_barang', 'satuan', 'tipe']);
+        return Inertia::render('pengajuans/create', [
+            'barangs' => $barangs,
+        ]);
     }
 
     public function store(StoreRequest $request)
     {
-        Pengajuans::create(array_merge($request->validated(), [
-            'user_id' => Auth::id(),
-            'status'  => 'pending',
-        ]));
+        DB::transaction(function () use ($request) {
+            $pengajuan = Pengajuans::create([
+                ...$request->only(['deskripsi', 'urgensi']),
+                'user_id' => Auth::id(),
+                'status'  => 'pending',
+            ]);
 
-        return redirect()->route('pengajuans.index')->with('success', 'Pengajuan berhasil dibuat.');
+            foreach ($request->items as $item) {
+                $pengajuan->barang_pengajuans()->create([
+                    'barang_id' => $item['barang_id'],
+                    'jumlah'    => $item['jumlah'],
+                ]);
+            }
+        });
+
+        return redirect()->route('pengajuans.index')
+            ->with('success', 'Pengajuan berhasil dibuat.');
     }
 
     public function show(string $pengajuan_id, Request $request)

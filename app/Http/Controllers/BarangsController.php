@@ -45,6 +45,7 @@ class BarangsController extends Controller implements HasMiddleware
                 'approveAllNormal'     => $request->user()?->can('pengajuans approve all normal'),
                 'buatPembelianSelisih' => $request->user()?->can('pengajuans buat pembelian selisih'),
             ],
+            'tipeOptions'         => Barangs::distinct()->orderBy('tipe')->pluck('tipe'),
         ]);
     }
 
@@ -86,14 +87,47 @@ class BarangsController extends Controller implements HasMiddleware
         return redirect()->route('barangs.index')->with('success', 'Barang berhasil dihapus.');
     }
 
-    public function downloadPdf()
+    public function downloadPdf(Request $request)
     {
-        $barangs = Barangs::all();
-        $html    = view('pdf.barang', ['barangs' => $barangs])->render();
+        $request->validate([
+            'tipe' => 'nullable|string',
+            'stok' => 'nullable|in:semua,rendah,habis',
+        ]);
 
-        $pdf = Pdf::loadHTML($html);
-        $pdf->setPaper('A4', 'portrait');
+        $barangs = Barangs::query()
+            ->when($request->tipe, fn($q, $v) => $q->where('tipe', $v))
+            ->when($request->stok === 'rendah', fn($q) => $q->where('stock_tersedia', '<', 10)->where('stock_tersedia', '>', 0))
+            ->when($request->stok === 'habis',  fn($q) => $q->where('stock_tersedia', 0))
+            ->orderBy('nama_barang')
+            ->get();
 
-        return $pdf->download('Laporan-Barang-' . date('Y-m-d') . '.pdf');
+        $filterInfo = $this->buildFilterInfo($request);
+
+        $html = view('pdf.barang', [
+            'barangs'    => $barangs,
+            'filterInfo' => $filterInfo,
+        ])->render();
+
+        $pdf = Pdf::loadHTML($html)->setPaper('A4', 'portrait');
+
+        $filename = 'Laporan-Barang-' . date('Y-m-d');
+        if ($request->tipe) $filename .= '-' . str_replace(' ', '_', $request->tipe);
+        if ($request->stok && $request->stok !== 'semua') $filename .= '-stok_' . $request->stok;
+
+        return $pdf->download($filename . '.pdf');
+    }
+
+    private function buildFilterInfo(Request $request): string
+    {
+        $parts = [];
+        if ($request->tipe) $parts[] = 'Tipe: ' . $request->tipe;
+        if ($request->stok && $request->stok !== 'semua') {
+            $parts[] = 'Stok: ' . match($request->stok) {
+                'rendah' => 'Stok Rendah (< 10)',
+                'habis'  => 'Stok Habis',
+                default  => $request->stok,
+            };
+        }
+        return $parts ? implode(' | ', $parts) : 'Semua barang';
     }
 }

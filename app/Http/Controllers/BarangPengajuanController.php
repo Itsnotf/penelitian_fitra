@@ -16,7 +16,7 @@ class BarangPengajuanController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('permission:pengajuans barang create', only: ['create', 'store']),
-            new Middleware('permission:pengajuans barang edit', only: ['edit', 'update   ']),
+            new Middleware('permission:pengajuans barang edit', only: ['edit', 'update']),
             new Middleware('permission:pengajuans barang delete', only: ['destroy']),
         ];
     }
