@@ -20,7 +20,7 @@ class DashboardController extends Controller
             return $this->adminDashboard();
         }
 
-        if ($user->hasRole('Tata Kelola')) {
+        if ($user->hasRole('Tata Usaha')) {
             return $this->tataKelolaDashboard();
         }
 
