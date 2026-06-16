@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\BarangPermintaan\StoreRequest;
+use App\Models\Barang_Permintaan;
+use App\Models\Barangs;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Inertia\Inertia;
+
+class BarangPermintaanController extends Controller implements HasMiddleware
+{
+    public static function middleware()
+    {
+        return [
+            new Middleware('permission:permintaan barang create', only: ['create', 'store']),
+            new Middleware('permission:permintaan barang edit', only: ['edit', 'update']),
+            new Middleware('permission:permintaan barang delete', only: ['destroy']),
+        ];
+    }
+
+    public function create(string $permintaan_id)
+    {
+        $barangs = Barangs::all();
+        return Inertia::render('permintaan/barangs/create', [
+            'permintaan_id' => $permintaan_id,
+            'barangs'       => $barangs,
+        ]);
+    }
+
+    public function store(string $permintaan_id, StoreRequest $request)
+    {
+        $validated = $request->validated();
+        $validated['pengajuan_id'] = $permintaan_id;
+
+        Barang_Permintaan::create($validated);
+
+        return redirect()->route('permintaan.show', $permintaan_id)->with('success', 'Barang permintaan berhasil ditambahkan.');
+    }
+
+    public function edit(string $permintaan_id, string $barang_Permintaan_id)
+    {
+        $barang_Permintaan = Barang_Permintaan::findOrFail($barang_Permintaan_id);
+        $barangs = Barangs::all();
+        return Inertia::render('permintaan/barangs/edit', [
+            'permintaan_id'    => $permintaan_id,
+            'barang_permintaan' => $barang_Permintaan,
+            'barangs'          => $barangs,
+        ]);
+    }
+
+    public function update(string $permintaan_id, string $barang_Permintaan_id, StoreRequest $request)
+    {
+        $barang_Permintaan = Barang_Permintaan::findOrFail($barang_Permintaan_id);
+        $barang_Permintaan->update($request->validated());
+
+        return redirect()->route('permintaan.show', $permintaan_id)->with('success', 'Barang permintaan berhasil diperbarui.');
+    }
+
+    public function destroy(string $permintaan_id, string $barang_Permintaan_id)
+    {
+        Barang_Permintaan::findOrFail($barang_Permintaan_id)->delete();
+
+        return redirect()->route('permintaan.show', $permintaan_id)->with('success', 'Barang permintaan berhasil dihapus.');
+    }
+}

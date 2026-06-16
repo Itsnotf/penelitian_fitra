@@ -22,24 +22,24 @@ class RoleSeeder extends Seeder
             'barangs index',
             'vendors index', 'vendors create', 'vendors edit', 'vendors delete',
             'vendors barang create', 'vendors barang edit', 'vendors barang delete',
-            'pembelians index', 'pembelians create', 'pembelians edit', 'pembelians delete',
-            'pembelians show', 'pembelians change status',
-            'pembelians barang create', 'pembelians barang edit', 'pembelians barang delete',
-            'pengajuans index', 'pengajuans show', 'pengajuans change status',
-            'pengajuans approve all normal', 'pengajuans buat pembelian selisih',
+            'pengadaan index', 'pengadaan create', 'pengadaan edit', 'pengadaan delete',
+            'pengadaan show', 'pengadaan change status',
+            'pengadaan barang create', 'pengadaan barang edit', 'pengadaan barang delete',
+            'permintaan index', 'permintaan show', 'permintaan change status',
+            'permintaan approve all normal', 'permintaan buat pengadaan selisih',
         ]);
 
         $kepalaBidang->givePermissionTo([
             'dashboard',
             'barangs index',
-            'pengajuans index', 'pengajuans show', 'pengajuans change status',
-            'pembelians index', 'pembelians show',
+            'permintaan index', 'permintaan show', 'permintaan change status',
+            'pengadaan index', 'pengadaan show',
         ]);
 
         $user->givePermissionTo([
-            'pengajuans index', 'pengajuans create', 'pengajuans edit', 'pengajuans delete',
-            'pengajuans show',
-            'pengajuans barang create', 'pengajuans barang edit', 'pengajuans barang delete',
+            'permintaan index', 'permintaan create', 'permintaan edit', 'permintaan delete',
+            'permintaan show',
+            'permintaan barang create', 'permintaan barang edit', 'permintaan barang delete',
         ]);
     }
 }

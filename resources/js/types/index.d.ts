@@ -100,7 +100,7 @@ export interface Barang {
     updated_at: string;
 }
 
-export interface Pembelian {
+export interface Pengadaan {
     id: number;
     user_id: number;
     vendor_id?: number | null;
@@ -115,7 +115,7 @@ export interface Pembelian {
     user: User;
 }
 
-export interface BarangPembelian {
+export interface BarangPengadaan {
     id: number;
     pembelian_id: number;
     barang_id: number;
@@ -124,10 +124,10 @@ export interface BarangPembelian {
     created_at: string;
     updated_at: string;
     barang?: Barang;
-    pembelian?: Pembelian;
+    pengadaan?: Pengadaan;
 }
 
-export interface Pengajuan {
+export interface Permintaan {
     id: number;
     user_id: number;
     deskripsi: string;
@@ -139,7 +139,7 @@ export interface Pengajuan {
     user: User;
 }
 
-export interface BarangPengajuan {
+export interface BarangPermintaan {
     id: number;
     pengajuan_id: number;
     barang_id: number;
@@ -147,5 +147,5 @@ export interface BarangPengajuan {
     created_at: string;
     updated_at: string;
     barang?: Barang;
-    pengajuan?: Pengajuan;
+    permintaan?: Permintaan;
 }

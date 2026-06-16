@@ -19,22 +19,22 @@ const statusLabel: Record<string, string> = { pending: 'Pending', proses: 'Dipro
 
 interface Props {
     stats: {
-        pengajuanPending: number; pengajuanProses: number;
-        pengajuanSelesaiBulanIni: number; pembelianSelesaiBulanIni: number;
+        permintaanPending: number; permintaanProses: number;
+        permintaanSelesaiBulanIni: number; pengadaanSelesaiBulanIni: number;
     };
-    pengajuanByStatus:  Record<string, number>;
-    pengajuanByUrgensi: Record<string, number>;
-    pengajuanMenunggu:  any[];
-    recentSelesai:      any[];
+    permintaanByStatus:  Record<string, number>;
+    permintaanByUrgensi: Record<string, number>;
+    permintaanMenunggu:  any[];
+    recentSelesai:       any[];
 }
 
-export default function KepalaBidangDashboard({ stats, pengajuanByStatus, pengajuanByUrgensi, pengajuanMenunggu, recentSelesai }: Props) {
-    const statusPieData = Object.entries(pengajuanByStatus).map(([status, total]) => ({
+export default function KepalaBidangDashboard({ stats, permintaanByStatus, permintaanByUrgensi, permintaanMenunggu, recentSelesai }: Props) {
+    const statusPieData = Object.entries(permintaanByStatus).map(([status, total]) => ({
         name: statusLabel[status] ?? status, value: total, status,
     }));
     const urgensiData = [
-        { name: 'Normal',   total: pengajuanByUrgensi['normal']   ?? 0, fill: '#64748b' },
-        { name: 'Mendesak', total: pengajuanByUrgensi['mendesak'] ?? 0, fill: '#ef4444' },
+        { name: 'Normal',   total: permintaanByUrgensi['normal']   ?? 0, fill: '#64748b' },
+        { name: 'Mendesak', total: permintaanByUrgensi['mendesak'] ?? 0, fill: '#ef4444' },
     ];
 
     return (
@@ -45,10 +45,10 @@ export default function KepalaBidangDashboard({ stats, pengajuanByStatus, pengaj
                 {/* KPI Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {[
-                        { label: 'Pengajuan Menunggu Approval', value: stats.pengajuanPending,         icon: ClipboardList,  color: 'text-yellow-500', bg: 'bg-yellow-50', urgent: stats.pengajuanPending > 0 },
-                        { label: 'Pengajuan Sedang Diproses',   value: stats.pengajuanProses,          icon: ClipboardCheck, color: 'text-blue-500',   bg: 'bg-blue-50',   urgent: false },
-                        { label: 'Pengajuan Selesai Bulan Ini', value: stats.pengajuanSelesaiBulanIni, icon: CheckCircle2,   color: 'text-green-500',  bg: 'bg-green-50',  urgent: false },
-                        { label: 'Pembelian Selesai Bulan Ini', value: stats.pembelianSelesaiBulanIni, icon: PackageCheck,   color: 'text-teal-500',   bg: 'bg-teal-50',   urgent: false },
+                        { label: 'Permintaan Menunggu Approval', value: stats.permintaanPending,          icon: ClipboardList,  color: 'text-yellow-500', bg: 'bg-yellow-50', urgent: stats.permintaanPending > 0 },
+                        { label: 'Permintaan Sedang Diproses',   value: stats.permintaanProses,           icon: ClipboardCheck, color: 'text-blue-500',   bg: 'bg-blue-50',   urgent: false },
+                        { label: 'Permintaan Selesai Bulan Ini', value: stats.permintaanSelesaiBulanIni,  icon: CheckCircle2,   color: 'text-green-500',  bg: 'bg-green-50',  urgent: false },
+                        { label: 'Pengadaan Selesai Bulan Ini',  value: stats.pengadaanSelesaiBulanIni,   icon: PackageCheck,   color: 'text-teal-500',   bg: 'bg-teal-50',   urgent: false },
                     ].map(({ label, value, icon: Icon, color, bg, urgent }) => (
                         <Card key={label} className={`hover:shadow-md transition-shadow ${urgent ? 'border-yellow-300 bg-yellow-50/60' : ''}`}>
                             <CardContent className="flex items-center justify-between p-5">
@@ -66,10 +66,10 @@ export default function KepalaBidangDashboard({ stats, pengajuanByStatus, pengaj
 
                 {/* Charts Row */}
                 <div className="grid gap-4 md:grid-cols-2">
-                    {/* Pie — Status Pengajuan */}
+                    {/* Pie — Status Permintaan */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Status Semua Pengajuan</CardTitle>
+                            <CardTitle className="text-sm">Status Semua Permintaan</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={220}>
@@ -89,7 +89,7 @@ export default function KepalaBidangDashboard({ stats, pengajuanByStatus, pengaj
                     {/* Bar — Urgensi */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Pengajuan per Urgensi</CardTitle>
+                            <CardTitle className="text-sm">Permintaan per Urgensi</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={220}>
@@ -107,29 +107,29 @@ export default function KepalaBidangDashboard({ stats, pengajuanByStatus, pengaj
                     </Card>
                 </div>
 
-                {/* Pengajuan Menunggu Persetujuan */}
-                <Card className={pengajuanMenunggu.length > 0 ? 'border-yellow-200' : ''}>
+                {/* Permintaan Menunggu Persetujuan */}
+                <Card className={permintaanMenunggu.length > 0 ? 'border-yellow-200' : ''}>
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
                                 <CardTitle className="text-sm flex items-center gap-2">
                                     <ClipboardList className="h-4 w-4 text-yellow-500" />
-                                    Pengajuan Menunggu Persetujuan
+                                    Permintaan Menunggu Persetujuan
                                 </CardTitle>
                                 <CardDescription>Klik "Tindak Lanjut" untuk melihat detail dan menyetujui</CardDescription>
                             </div>
-                            <Link href="/pengajuans"><Button size="sm" variant="ghost" className="text-xs">Lihat Semua</Button></Link>
+                            <Link href="/permintaan"><Button size="sm" variant="ghost" className="text-xs">Lihat Semua</Button></Link>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {pengajuanMenunggu.length === 0 ? (
+                        {permintaanMenunggu.length === 0 ? (
                             <div className="py-6 text-center text-sm text-muted-foreground">
                                 <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-green-400" />
-                                Tidak ada pengajuan yang menunggu persetujuan.
+                                Tidak ada permintaan yang menunggu persetujuan.
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {pengajuanMenunggu.map((p: any) => (
+                                {permintaanMenunggu.map((p: any) => (
                                     <div key={p.id} className="flex items-center justify-between rounded-md border border-yellow-100 bg-yellow-50/40 p-3 text-sm hover:bg-yellow-50 transition-colors">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export default function KepalaBidangDashboard({ stats, pengajuanByStatus, pengaj
                                                 Oleh {p.user.name} · {new Date(p.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </p>
                                         </div>
-                                        <Link href={`/pengajuans/${p.id}`} className="ml-3 shrink-0">
+                                        <Link href={`/permintaan/${p.id}`} className="ml-3 shrink-0">
                                             <Button size="sm" variant="outline" className="border-yellow-400 text-yellow-700 hover:bg-yellow-100">
                                                 Tindak Lanjut
                                             </Button>
@@ -160,9 +160,9 @@ export default function KepalaBidangDashboard({ stats, pengajuanByStatus, pengaj
                         <CardHeader><CardTitle className="text-sm">Akses Cepat</CardTitle></CardHeader>
                         <CardContent className="grid grid-cols-2 gap-2">
                             {[
-                                { label: 'Semua Pengajuan',  href: '/pengajuans',  className: 'border-blue-200 text-blue-700 hover:bg-blue-50' },
-                                { label: 'Semua Pembelian',  href: '/pembelians',  className: 'border-green-200 text-green-700 hover:bg-green-50' },
-                                { label: 'Data Barang',      href: '/barangs',     className: 'border-orange-200 text-orange-700 hover:bg-orange-50' },
+                                { label: 'Semua Permintaan', href: '/permintaan', className: 'border-blue-200 text-blue-700 hover:bg-blue-50' },
+                                { label: 'Semua Pengadaan',  href: '/pengadaan',  className: 'border-green-200 text-green-700 hover:bg-green-50' },
+                                { label: 'Data Barang',      href: '/barangs',    className: 'border-orange-200 text-orange-700 hover:bg-orange-50' },
                             ].map(({ label, href, className }) => (
                                 <Link key={href} href={href}>
                                     <Button variant="outline" className={`w-full ${className}`}>{label}</Button>
@@ -173,11 +173,11 @@ export default function KepalaBidangDashboard({ stats, pengajuanByStatus, pengaj
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Pengajuan Selesai Terbaru</CardTitle>
+                            <CardTitle className="text-sm">Permintaan Selesai Terbaru</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
                             {recentSelesai.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">Belum ada pengajuan selesai.</p>
+                                <p className="text-sm text-muted-foreground">Belum ada permintaan selesai.</p>
                             ) : recentSelesai.map((p: any) => (
                                 <div key={p.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
                                     <div>

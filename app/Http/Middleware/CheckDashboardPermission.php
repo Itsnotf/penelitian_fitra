@@ -16,7 +16,7 @@ class CheckDashboardPermission
     public function handle(Request $request, Closure $next): Response
     {
         if (!$request->user()?->hasPermissionTo('dashboard')) {
-            return redirect()->route('pengajuans.index')->with('warning', 'Anda tidak memiliki akses ke dashboard');
+            return redirect()->route('permintaan.index')->with('warning', 'Anda tidak memiliki akses ke dashboard');
         }
 
         return $next($request);

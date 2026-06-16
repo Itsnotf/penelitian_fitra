@@ -30,7 +30,7 @@ interface Props {
     hasJumlahPermintaan: boolean;
     allStockSufficient: boolean;
     flash?: { success?: string; error?: string };
-    can: { approveAllNormal: boolean; buatPembelianSelisih: boolean };
+    can: { approveAllNormal: boolean; buatPengadaanSelisih: boolean };
     tipeOptions: string[];
 }
 
@@ -57,11 +57,11 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
     };
 
     const handleApproveAllNormal = () => {
-        router.post('/pengajuans/approve-all-normal', {}, { onSuccess: () => {}, onError: () => {} });
+        router.post('/permintaan/approve-all-normal', {}, { onSuccess: () => {}, onError: () => {} });
     };
 
-    const handleBuatPembelianSelisih = () => {
-        router.post('/pengajuans/buat-pembelian-selisih', {}, { onSuccess: () => {}, onError: () => {} });
+    const handleBuatPengadaanSelisih = () => {
+        router.post('/permintaan/buat-pengadaan-selisih', {}, { onSuccess: () => {}, onError: () => {} });
     };
 
     return (
@@ -96,9 +96,9 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                    <AlertDialogTitle>Setujui Semua Pengajuan Normal?</AlertDialogTitle>
+                                    <AlertDialogTitle>Setujui Semua Permintaan Normal?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Semua pengajuan normal yang sedang diproses akan disetujui. Stock akan dikurangi sesuai jumlah permintaan. Tindakan ini tidak dapat dibatalkan.
+                                        Semua permintaan normal yang sedang diproses akan disetujui. Stock akan dikurangi sesuai jumlah permintaan. Tindakan ini tidak dapat dibatalkan.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -113,26 +113,26 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
                         </AlertDialog>
                     )}
 
-                    {can.buatPembelianSelisih && hasJumlahPermintaan && !allStockSufficient && (
+                    {can.buatPengadaanSelisih && hasJumlahPermintaan && !allStockSufficient && (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="outline" className="border-orange-400 text-orange-600 hover:bg-orange-50 gap-1">
                                     <ShoppingCart size={16} />
-                                    Buat Pembelian Selisih
+                                    Buat Pengadaan Selisih
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                    <AlertDialogTitle>Buat Pembelian untuk Selisih Stok?</AlertDialogTitle>
+                                    <AlertDialogTitle>Buat Pengadaan untuk Selisih Stok?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Sistem akan membuat data pembelian dengan jumlah sesuai selisih antara jumlah permintaan dan stok yang tersedia. Anda perlu memilih vendor setelahnya.
+                                        Sistem akan membuat data pengadaan dengan jumlah sesuai selisih antara jumlah permintaan dan stok yang tersedia. Anda perlu memilih vendor setelahnya.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Batal</AlertDialogCancel>
                                     <AlertDialogAction asChild>
-                                        <Button className="bg-orange-600 hover:bg-orange-700" onClick={handleBuatPembelianSelisih}>
-                                            Ya, Buat Pembelian
+                                        <Button className="bg-orange-600 hover:bg-orange-700" onClick={handleBuatPengadaanSelisih}>
+                                            Ya, Buat Pengadaan
                                         </Button>
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -144,7 +144,7 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
                 {hasJumlahPermintaan && !allStockSufficient && (
                     <div className="flex items-center gap-2 rounded-md border border-orange-200 bg-orange-50 p-3 text-sm text-orange-700">
                         <AlertTriangle size={16} />
-                        Ada barang dengan stok tidak mencukupi jumlah permintaan. Buat pembelian selisih terlebih dahulu.
+                        Ada barang dengan stok tidak mencukupi jumlah permintaan. Buat pengadaan selisih terlebih dahulu.
                     </div>
                 )}
 

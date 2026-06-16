@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barangs;
-use App\Models\Pembelians;
-use App\Models\Pengajuans;
+use App\Models\Pengadaan;
+use App\Models\Permintaan;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
@@ -33,12 +33,12 @@ class DashboardController extends Controller
 
     private function adminDashboard()
     {
-        $pembelianBulanan = collect(range(5, 0))->map(function ($i) {
+        $pengadaanBulanan = collect(range(5, 0))->map(function ($i) {
             $month = now()->subMonths($i);
             return [
                 'bulan'   => $month->format('M Y'),
-                'total'   => Pembelians::whereYear('created_at', $month->year)->whereMonth('created_at', $month->month)->count(),
-                'selesai' => Pembelians::whereYear('created_at', $month->year)->whereMonth('created_at', $month->month)->where('status', 'selesai')->count(),
+                'total'   => Pengadaan::whereYear('created_at', $month->year)->whereMonth('created_at', $month->month)->count(),
+                'selesai' => Pengadaan::whereYear('created_at', $month->year)->whereMonth('created_at', $month->month)->where('status', 'selesai')->count(),
             ];
         });
 
@@ -52,21 +52,21 @@ class DashboardController extends Controller
             'stats' => [
                 'totalBarangs'       => Barangs::count(),
                 'totalVendors'       => Vendor::count(),
-                'totalPembelians'    => Pembelians::count(),
-                'totalPengajuans'    => Pengajuans::count(),
+                'totalPengadaan'     => Pengadaan::count(),
+                'totalPermintaan'    => Permintaan::count(),
                 'totalUsers'         => User::count(),
                 'totalStockTersedia' => Barangs::sum('stock_tersedia'),
-                'pembelianPending'   => Pembelians::where('status', 'pending')->count(),
-                'pengajuanPending'   => Pengajuans::where('status', 'pending')->count(),
+                'pengadaanPending'   => Pengadaan::where('status', 'pending')->count(),
+                'permintaanPending'  => Permintaan::where('status', 'pending')->count(),
             ],
-            'pembelianByStatus'  => Pembelians::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
-            'pengajuanByStatus'  => Pengajuans::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
-            'pengajuanByUrgensi' => Pengajuans::selectRaw('urgensi, count(*) as total')->groupBy('urgensi')->pluck('total', 'urgensi'),
-            'pembelianBulanan'   => $pembelianBulanan,
+            'pengadaanByStatus'  => Pengadaan::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
+            'permintaanByStatus' => Permintaan::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
+            'permintaanByUrgensi' => Permintaan::selectRaw('urgensi, count(*) as total')->groupBy('urgensi')->pluck('total', 'urgensi'),
+            'pengadaanBulanan'   => $pengadaanBulanan,
             'usersByRole'        => $usersByRole,
             'lowStockBarangs'    => Barangs::where('stock_tersedia', '<', 10)->orderBy('stock_tersedia')->limit(5)->get(['id', 'nama_barang', 'stock_tersedia', 'satuan']),
-            'recentPembelians'   => Pembelians::with('user', 'vendor')->latest()->limit(5)->get(),
-            'recentPengajuans'   => Pengajuans::with('user')->latest()->limit(5)->get(),
+            'recentPengadaan'    => Pengadaan::with('user', 'vendor')->latest()->limit(5)->get(),
+            'recentPermintaan'   => Permintaan::with('user')->latest()->limit(5)->get(),
         ]);
     }
 
@@ -86,15 +86,15 @@ class DashboardController extends Controller
             'stats' => [
                 'totalBarangs'          => Barangs::count(),
                 'totalVendors'          => Vendor::count(),
-                'pembelianPending'      => Pembelians::where('status', 'pending')->count(),
-                'pembelianProses'       => Pembelians::where('status', 'proses')->count(),
+                'pengadaanPending'      => Pengadaan::where('status', 'pending')->count(),
+                'pengadaanProses'       => Pengadaan::where('status', 'proses')->count(),
                 'totalJumlahPermintaan' => (int) Barangs::sum('jumlah_permintaan'),
                 'deficitCount'          => Barangs::where('jumlah_permintaan', '>', 0)->whereColumn('stock_tersedia', '<', 'jumlah_permintaan')->count(),
             ],
             'stockVsPermintaan'  => $stockVsPermintaan,
-            'pembelianByStatus'  => Pembelians::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
+            'pengadaanByStatus'  => Pengadaan::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
             'deficitBarangs'     => Barangs::where('jumlah_permintaan', '>', 0)->whereColumn('stock_tersedia', '<', 'jumlah_permintaan')->get(['id', 'nama_barang', 'stock_tersedia', 'jumlah_permintaan', 'satuan']),
-            'pembelianMenunggu'  => Pembelians::with('vendor')->whereIn('status', ['pending', 'proses'])->latest()->limit(5)->get(),
+            'pengadaanMenunggu'  => Pengadaan::with('vendor')->whereIn('status', ['pending', 'proses'])->latest()->limit(5)->get(),
         ]);
     }
 
@@ -102,35 +102,35 @@ class DashboardController extends Controller
     {
         return Inertia::render('dashboard/kepala-bidang', [
             'stats' => [
-                'pengajuanPending'         => Pengajuans::where('status', 'pending')->count(),
-                'pengajuanProses'          => Pengajuans::where('status', 'proses')->count(),
-                'pengajuanSelesaiBulanIni' => Pengajuans::where('status', 'selesai')->whereMonth('updated_at', now()->month)->count(),
-                'pembelianSelesaiBulanIni' => Pembelians::where('status', 'selesai')->whereMonth('updated_at', now()->month)->count(),
+                'permintaanPending'         => Permintaan::where('status', 'pending')->count(),
+                'permintaanProses'          => Permintaan::where('status', 'proses')->count(),
+                'permintaanSelesaiBulanIni' => Permintaan::where('status', 'selesai')->whereMonth('updated_at', now()->month)->count(),
+                'pengadaanSelesaiBulanIni'  => Pengadaan::where('status', 'selesai')->whereMonth('updated_at', now()->month)->count(),
             ],
-            'pengajuanByStatus'  => Pengajuans::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
-            'pengajuanByUrgensi' => Pengajuans::selectRaw('urgensi, count(*) as total')->groupBy('urgensi')->pluck('total', 'urgensi'),
-            'pengajuanMenunggu'  => Pengajuans::with('user')->where('status', 'pending')->latest()->limit(10)->get(),
-            'recentSelesai'      => Pengajuans::with('user')->where('status', 'selesai')->latest()->limit(5)->get(),
+            'permintaanByStatus'  => Permintaan::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
+            'permintaanByUrgensi' => Permintaan::selectRaw('urgensi, count(*) as total')->groupBy('urgensi')->pluck('total', 'urgensi'),
+            'permintaanMenunggu'  => Permintaan::with('user')->where('status', 'pending')->latest()->limit(10)->get(),
+            'recentSelesai'       => Permintaan::with('user')->where('status', 'selesai')->latest()->limit(5)->get(),
         ]);
     }
 
     private function userDashboard()
     {
-        $myPengajuans = Pengajuans::with(['barang_pengajuans.barang', 'pembelians'])
+        $myPermintaan = Permintaan::with(['barang_permintaan.barang', 'pengadaan'])
             ->where('user_id', Auth::id())
             ->latest()
             ->get();
 
         $summary = [
-            'total'    => $myPengajuans->count(),
-            'pending'  => $myPengajuans->where('status', 'pending')->count(),
-            'proses'   => $myPengajuans->where('status', 'proses')->count(),
-            'selesai'  => $myPengajuans->where('status', 'selesai')->count(),
-            'rejected' => $myPengajuans->where('status', 'rejected')->count(),
+            'total'    => $myPermintaan->count(),
+            'pending'  => $myPermintaan->where('status', 'pending')->count(),
+            'proses'   => $myPermintaan->where('status', 'proses')->count(),
+            'selesai'  => $myPermintaan->where('status', 'selesai')->count(),
+            'rejected' => $myPermintaan->where('status', 'rejected')->count(),
         ];
 
         return Inertia::render('dashboard/user', [
-            'myPengajuans' => $myPengajuans,
+            'myPermintaan' => $myPermintaan,
             'summary'      => $summary,
         ]);
     }

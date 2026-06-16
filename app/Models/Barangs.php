@@ -8,14 +8,14 @@ class Barangs extends Model
 {
     protected $guarded = ['id'];
 
-    public function barang_pembelians()
+    public function barang_pengadaan()
     {
-        return $this->hasMany(Barang_Pembelian::class);
+        return $this->hasMany(Barang_Pengadaan::class, 'barang_id');
     }
 
-    public function barang_pengajuans()
+    public function barang_permintaan()
     {
-        return $this->hasMany(Barang_Pengajuan::class);
+        return $this->hasMany(Barang_Permintaan::class, 'barang_id');
     }
 
     public function barangVendors()

@@ -42,8 +42,8 @@ class BarangsController extends Controller implements HasMiddleware
             'allStockSufficient'  => $allStockSufficient,
             'flash'               => ['success' => session('success'), 'error' => session('error')],
             'can'                 => [
-                'approveAllNormal'     => $request->user()?->can('pengajuans approve all normal'),
-                'buatPembelianSelisih' => $request->user()?->can('pengajuans buat pembelian selisih'),
+                'approveAllNormal'    => $request->user()?->can('permintaan approve all normal'),
+                'buatPengadaanSelisih' => $request->user()?->can('permintaan buat pengadaan selisih'),
             ],
             'tipeOptions'         => Barangs::distinct()->orderBy('tipe')->pluck('tipe'),
         ]);

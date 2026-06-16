@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\BarangPembelianController;
-use App\Http\Controllers\BarangPengajuanController;
+use App\Http\Controllers\BarangPengadaanController;
+use App\Http\Controllers\BarangPermintaanController;
 use App\Http\Controllers\BarangVendorController;
 use App\Http\Controllers\BarangsController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PembeliansController;
-use App\Http\Controllers\PengajuansController;
+use App\Http\Controllers\PengadaanController;
+use App\Http\Controllers\PermintaanController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorController;
@@ -36,32 +36,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{barang_vendor_id}', [BarangVendorController::class, 'destroy'])->name('destroy');
     });
 
-    Route::resource('pembelians', PembeliansController::class);
-    Route::post('pembelians/{id}/change-status', [PembeliansController::class, 'changeStatus'])->name('pembelians.changeStatus');
-    Route::get('pembelians/{id}/download-pdf', [PembeliansController::class, 'downloadPdf'])->name('pembelians.downloadPdf');
+    Route::resource('pengadaan', PengadaanController::class);
+    Route::post('pengadaan/{id}/change-status', [PengadaanController::class, 'changeStatus'])->name('pengadaan.changeStatus');
+    Route::get('pengadaan/{id}/download-pdf', [PengadaanController::class, 'downloadPdf'])->name('pengadaan.downloadPdf');
 
-    Route::prefix('pembelians/{pembelian_id}/barangs')->group(function () {
-        Route::get('/create', [BarangPembelianController::class, 'create'])->name('pembelians.barangs.create');
-        Route::post('/', [BarangPembelianController::class, 'store'])->name('pembelians.barangs.store');
-        Route::get('/{barang_Pembelian_id}/edit', [BarangPembelianController::class, 'edit'])->name('pembelians.barangs.edit');
-        Route::put('/{barang_Pembelian_id}', [BarangPembelianController::class, 'update'])->name('pembelians.barangs.update');
-        Route::delete('/{barang_Pembelian_id}', [BarangPembelianController::class, 'destroy'])->name('pembelians.barangs.destroy');
+    Route::prefix('pengadaan/{pengadaan_id}/barangs')->group(function () {
+        Route::get('/create', [BarangPengadaanController::class, 'create'])->name('pengadaan.barangs.create');
+        Route::post('/', [BarangPengadaanController::class, 'store'])->name('pengadaan.barangs.store');
+        Route::get('/{barang_Pengadaan_id}/edit', [BarangPengadaanController::class, 'edit'])->name('pengadaan.barangs.edit');
+        Route::put('/{barang_Pengadaan_id}', [BarangPengadaanController::class, 'update'])->name('pengadaan.barangs.update');
+        Route::delete('/{barang_Pengadaan_id}', [BarangPengadaanController::class, 'destroy'])->name('pengadaan.barangs.destroy');
     });
 
-    // Pengajuans — route spesifik SEBELUM resource
-    Route::post('pengajuans/approve-all-normal', [PengajuansController::class, 'approveAllNormal'])->name('pengajuans.approveAllNormal');
-    Route::post('pengajuans/buat-pembelian-selisih', [PengajuansController::class, 'buatPembelianSelisih'])->name('pengajuans.buatPembelianSelisih');
-    Route::resource('pengajuans', PengajuansController::class);
-    Route::post('pengajuans/{id}/change-status', [PengajuansController::class, 'changeStatus'])->name('pengajuans.changeStatus');
-    Route::post('pengajuans/{id}/reject-status', [PengajuansController::class, 'rejectStatus'])->name('pengajuans.rejectStatus');
-    Route::get('pengajuans/{id}/download-pdf', [PengajuansController::class, 'downloadPdf'])->name('pengajuans.downloadPdf');
+    // Permintaan — route spesifik SEBELUM resource
+    Route::post('permintaan/approve-all-normal', [PermintaanController::class, 'approveAllNormal'])->name('permintaan.approveAllNormal');
+    Route::post('permintaan/buat-pengadaan-selisih', [PermintaanController::class, 'buatPengadaanSelisih'])->name('permintaan.buatPengadaanSelisih');
+    Route::resource('permintaan', PermintaanController::class);
+    Route::post('permintaan/{id}/change-status', [PermintaanController::class, 'changeStatus'])->name('permintaan.changeStatus');
+    Route::post('permintaan/{id}/reject-status', [PermintaanController::class, 'rejectStatus'])->name('permintaan.rejectStatus');
+    Route::get('permintaan/{id}/download-pdf', [PermintaanController::class, 'downloadPdf'])->name('permintaan.downloadPdf');
 
-    Route::prefix('pengajuans/{pengajuan_id}/barangs')->group(function () {
-        Route::get('/create', [BarangPengajuanController::class, 'create'])->name('pengajuans.barangs.create');
-        Route::post('/', [BarangPengajuanController::class, 'store'])->name('pengajuans.barangs.store');
-        Route::get('/{barang_Pengajuan_id}/edit', [BarangPengajuanController::class, 'edit'])->name('pengajuans.barangs.edit');
-        Route::put('/{barang_Pengajuan_id}', [BarangPengajuanController::class, 'update'])->name('pengajuans.barangs.update');
-        Route::delete('/{barang_Pengajuan_id}', [BarangPengajuanController::class, 'destroy'])->name('pengajuans.barangs.destroy');
+    Route::prefix('permintaan/{permintaan_id}/barangs')->group(function () {
+        Route::get('/create', [BarangPermintaanController::class, 'create'])->name('permintaan.barangs.create');
+        Route::post('/', [BarangPermintaanController::class, 'store'])->name('permintaan.barangs.store');
+        Route::get('/{barang_Permintaan_id}/edit', [BarangPermintaanController::class, 'edit'])->name('permintaan.barangs.edit');
+        Route::put('/{barang_Permintaan_id}', [BarangPermintaanController::class, 'update'])->name('permintaan.barangs.update');
+        Route::delete('/{barang_Permintaan_id}', [BarangPermintaanController::class, 'destroy'])->name('permintaan.barangs.destroy');
     });
 });
 

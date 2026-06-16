@@ -7,8 +7,6 @@ import { Package, Truck, FileText, AlertTriangle, TrendingUp, TrendingDown } fro
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import pembelians from '@/routes/pembelians';
-import pengajuans from '@/routes/pengajuans';
 import barangs from '@/routes/barangs';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -211,7 +209,7 @@ export default function Dashboard(props: DashboardData) {
                                     <CardTitle>Pembelian Terbaru</CardTitle>
                                     <CardDescription>Pemesanan pembelian terbaru</CardDescription>
                                 </div>
-                                <Link href={pembelians.index().url}>
+                                <Link href="/pengadaan">
                                     <Button size="sm" variant="ghost">Lihat Semua</Button>
                                 </Link>
                             </div>
@@ -249,7 +247,7 @@ export default function Dashboard(props: DashboardData) {
                                     <CardTitle>Pengajuan Terbaru</CardTitle>
                                     <CardDescription>Pengajuan pinjaman terbaru</CardDescription>
                                 </div>
-                                <Link href={pengajuans.index().url}>
+                                <Link href="/permintaan">
                                     <Button size="sm" variant="ghost">Lihat Semua</Button>
                                 </Link>
                             </div>

@@ -43,36 +43,36 @@ const ROLE_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 interface Props {
     stats: {
-        totalBarangs: number; totalVendors: number; totalPembelians: number;
-        totalPengajuans: number; totalUsers: number; totalStockTersedia: number;
-        pembelianPending: number; pengajuanPending: number;
+        totalBarangs: number; totalVendors: number; totalPengadaan: number;
+        totalPermintaan: number; totalUsers: number; totalStockTersedia: number;
+        pengadaanPending: number; permintaanPending: number;
     };
-    pembelianByStatus:  Record<string, number>;
-    pengajuanByStatus:  Record<string, number>;
-    pengajuanByUrgensi: Record<string, number>;
-    pembelianBulanan:   { bulan: string; total: number; selesai: number }[];
+    pengadaanByStatus:  Record<string, number>;
+    permintaanByStatus:  Record<string, number>;
+    permintaanByUrgensi: Record<string, number>;
+    pengadaanBulanan:   { bulan: string; total: number; selesai: number }[];
     usersByRole:        { role: string; total: number }[];
     lowStockBarangs:    { id: number; nama_barang: string; stock_tersedia: number; satuan: string }[];
-    recentPembelians:   any[];
-    recentPengajuans:   any[];
+    recentPengadaan:   any[];
+    recentPermintaan:   any[];
 }
 
 const statusLabel: Record<string, string> = { pending: 'Pending', proses: 'Diproses', selesai: 'Selesai', rejected: 'Ditolak' };
 
 export default function AdminDashboard({
-    stats, pembelianByStatus, pengajuanByStatus, pengajuanByUrgensi,
-    pembelianBulanan, usersByRole, lowStockBarangs, recentPembelians, recentPengajuans,
+    stats, pengadaanByStatus, permintaanByStatus, permintaanByUrgensi,
+    pengadaanBulanan, usersByRole, lowStockBarangs, recentPengadaan, recentPermintaan,
 }: Props) {
 
-    const pembelianPieData = Object.entries(pembelianByStatus).map(([status, total]) => ({
+    const pengadaanPieData = Object.entries(pengadaanByStatus).map(([status, total]) => ({
         name: statusLabel[status] ?? status, value: total, status,
     }));
-    const pengajuanPieData = Object.entries(pengajuanByStatus).map(([status, total]) => ({
+    const permintaanPieData = Object.entries(permintaanByStatus).map(([status, total]) => ({
         name: statusLabel[status] ?? status, value: total, status,
     }));
     const urgensiData = [
-        { name: 'Normal',   total: pengajuanByUrgensi['normal']   ?? 0 },
-        { name: 'Mendesak', total: pengajuanByUrgensi['mendesak'] ?? 0 },
+        { name: 'Normal',   total: permintaanByUrgensi['normal']   ?? 0 },
+        { name: 'Mendesak', total: permintaanByUrgensi['mendesak'] ?? 0 },
     ];
 
     return (
@@ -83,14 +83,14 @@ export default function AdminDashboard({
                 {/* KPI Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {[
-                        { label: 'Total Barang',     value: stats.totalBarangs,       icon: Box,           color: 'text-blue-500',   bg: 'bg-blue-50'   },
-                        { label: 'Total Vendor',      value: stats.totalVendors,       icon: Store,         color: 'text-purple-500', bg: 'bg-purple-50' },
-                        { label: 'Total Pembelian',   value: stats.totalPembelians,    icon: ShoppingCart,  color: 'text-green-500',  bg: 'bg-green-50'  },
-                        { label: 'Total Pengajuan',   value: stats.totalPengajuans,    icon: ClipboardList, color: 'text-orange-500', bg: 'bg-orange-50' },
-                        { label: 'Total Pengguna',    value: stats.totalUsers,         icon: Users,         color: 'text-indigo-500', bg: 'bg-indigo-50' },
-                        { label: 'Stok Tersedia',     value: stats.totalStockTersedia, icon: TrendingUp,    color: 'text-teal-500',   bg: 'bg-teal-50'   },
-                        { label: 'Pembelian Pending', value: stats.pembelianPending,   icon: TrendingDown,  color: 'text-yellow-500', bg: 'bg-yellow-50' },
-                        { label: 'Pengajuan Pending', value: stats.pengajuanPending,   icon: AlertTriangle, color: 'text-red-500',    bg: 'bg-red-50'    },
+                        { label: 'Total Barang',      value: stats.totalBarangs,       icon: Box,           color: 'text-blue-500',   bg: 'bg-blue-50'   },
+                        { label: 'Total Vendor',       value: stats.totalVendors,       icon: Store,         color: 'text-purple-500', bg: 'bg-purple-50' },
+                        { label: 'Total Pengadaan',    value: stats.totalPengadaan,     icon: ShoppingCart,  color: 'text-green-500',  bg: 'bg-green-50'  },
+                        { label: 'Total Permintaan',   value: stats.totalPermintaan,    icon: ClipboardList, color: 'text-orange-500', bg: 'bg-orange-50' },
+                        { label: 'Total Pengguna',     value: stats.totalUsers,         icon: Users,         color: 'text-indigo-500', bg: 'bg-indigo-50' },
+                        { label: 'Stok Tersedia',      value: stats.totalStockTersedia, icon: TrendingUp,    color: 'text-teal-500',   bg: 'bg-teal-50'   },
+                        { label: 'Pengadaan Pending',  value: stats.pengadaanPending,   icon: TrendingDown,  color: 'text-yellow-500', bg: 'bg-yellow-50' },
+                        { label: 'Permintaan Pending', value: stats.permintaanPending,  icon: AlertTriangle, color: 'text-red-500',    bg: 'bg-red-50'    },
                     ].map(({ label, value, icon: Icon, color, bg }) => (
                         <Card key={label} className="hover:shadow-md transition-shadow">
                             <CardContent className="flex items-center justify-between p-5">
@@ -106,15 +106,15 @@ export default function AdminDashboard({
                     ))}
                 </div>
 
-                {/* Line Chart — Pembelian 6 Bulan */}
+                {/* Line Chart — Pengadaan 6 Bulan */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Aktivitas Pembelian (6 Bulan Terakhir)</CardTitle>
-                        <CardDescription>Total pembelian dibuat vs yang sudah selesai</CardDescription>
+                        <CardTitle>Aktivitas Pengadaan (6 Bulan Terakhir)</CardTitle>
+                        <CardDescription>Total pengadaan dibuat vs yang sudah selesai</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={240}>
-                            <LineChart data={pembelianBulanan} margin={{ left: -10 }}>
+                            <LineChart data={pengadaanBulanan} margin={{ left: -10 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                 <XAxis dataKey="bulan" tick={{ fontSize: 12 }} />
                                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
@@ -129,16 +129,16 @@ export default function AdminDashboard({
 
                 {/* Pie Charts Row */}
                 <div className="grid gap-4 md:grid-cols-3">
-                    {/* Pembelian by Status */}
+                    {/* Pengadaan by Status */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Status Pembelian</CardTitle>
+                            <CardTitle className="text-sm">Status Pengadaan</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={200}>
                                 <PieChart>
-                                    <Pie data={pembelianPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
-                                        {pembelianPieData.map((entry) => (
+                                    <Pie data={pengadaanPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
+                                        {pengadaanPieData.map((entry) => (
                                             <Cell key={entry.status} fill={STATUS_COLORS[entry.status] ?? '#94a3b8'} />
                                         ))}
                                     </Pie>
@@ -148,16 +148,16 @@ export default function AdminDashboard({
                         </CardContent>
                     </Card>
 
-                    {/* Pengajuan by Status */}
+                    {/* Permintaan by Status */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Status Pengajuan</CardTitle>
+                            <CardTitle className="text-sm">Status Permintaan</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={200}>
                                 <PieChart>
-                                    <Pie data={pengajuanPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
-                                        {pengajuanPieData.map((entry) => (
+                                    <Pie data={permintaanPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
+                                        {permintaanPieData.map((entry) => (
                                             <Cell key={entry.status} fill={STATUS_COLORS[entry.status] ?? '#94a3b8'} />
                                         ))}
                                     </Pie>
@@ -167,10 +167,10 @@ export default function AdminDashboard({
                         </CardContent>
                     </Card>
 
-                    {/* Pengajuan by Urgensi */}
+                    {/* Permintaan by Urgensi */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Urgensi Pengajuan</CardTitle>
+                            <CardTitle className="text-sm">Urgensi Permintaan</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={200}>
@@ -243,14 +243,14 @@ export default function AdminDashboard({
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm">Pembelian Terbaru</CardTitle>
-                                <Link href="/pembelians"><Button size="sm" variant="ghost" className="text-xs">Lihat Semua</Button></Link>
+                                <CardTitle className="text-sm">Pengadaan Terbaru</CardTitle>
+                                <Link href="/pengadaan"><Button size="sm" variant="ghost" className="text-xs">Lihat Semua</Button></Link>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                            {recentPembelians.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">Belum ada pembelian.</p>
-                            ) : recentPembelians.map((p: any) => (
+                            {recentPengadaan.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">Belum ada pengadaan.</p>
+                            ) : recentPengadaan.map((p: any) => (
                                 <div key={p.id} className="flex items-center justify-between rounded-md border p-2 text-sm hover:bg-accent transition-colors">
                                     <div>
                                         <p className="font-medium">{p.vendor?.nama_vendor ?? 'Tanpa vendor'}</p>
@@ -267,14 +267,14 @@ export default function AdminDashboard({
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm">Pengajuan Terbaru</CardTitle>
-                                <Link href="/pengajuans"><Button size="sm" variant="ghost" className="text-xs">Lihat Semua</Button></Link>
+                                <CardTitle className="text-sm">Permintaan Terbaru</CardTitle>
+                                <Link href="/permintaan"><Button size="sm" variant="ghost" className="text-xs">Lihat Semua</Button></Link>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                            {recentPengajuans.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">Belum ada pengajuan.</p>
-                            ) : recentPengajuans.map((p: any) => (
+                            {recentPermintaan.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">Belum ada permintaan.</p>
+                            ) : recentPermintaan.map((p: any) => (
                                 <div key={p.id} className="flex items-center justify-between rounded-md border p-2 text-sm hover:bg-accent transition-colors">
                                     <div>
                                         <p className="font-medium truncate max-w-[180px]">{p.deskripsi}</p>

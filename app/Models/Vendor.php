@@ -20,8 +20,8 @@ class Vendor extends Model
             ->withTimestamps();
     }
 
-    public function pembelians()
+    public function pengadaan()
     {
-        return $this->hasMany(Pembelians::class);
+        return $this->hasMany(Pengadaan::class);
     }
 }

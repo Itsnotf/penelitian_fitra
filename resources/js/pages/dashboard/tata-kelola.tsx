@@ -18,19 +18,19 @@ const STATUS_COLORS: Record<string, string> = {
 
 interface Props {
     stats: {
-        totalBarangs: number; totalVendors: number; pembelianPending: number;
-        pembelianProses: number; totalJumlahPermintaan: number; deficitCount: number;
+        totalBarangs: number; totalVendors: number; pengadaanPending: number;
+        pengadaanProses: number; totalJumlahPermintaan: number; deficitCount: number;
     };
     stockVsPermintaan: { nama: string; stock_tersedia: number; jumlah_permintaan: number }[];
-    pembelianByStatus: Record<string, number>;
+    pengadaanByStatus: Record<string, number>;
     deficitBarangs:    { id: number; nama_barang: string; stock_tersedia: number; jumlah_permintaan: number; satuan: string }[];
-    pembelianMenunggu: any[];
+    pengadaanMenunggu: any[];
 }
 
 const statusLabel: Record<string, string> = { pending: 'Pending', proses: 'Diproses', selesai: 'Selesai' };
 
-export default function TataKelolaDashboard({ stats, stockVsPermintaan, pembelianByStatus, deficitBarangs, pembelianMenunggu }: Props) {
-    const pembelianPieData = Object.entries(pembelianByStatus).map(([status, total]) => ({
+export default function TataKelolaDashboard({ stats, stockVsPermintaan, pengadaanByStatus, deficitBarangs, pengadaanMenunggu }: Props) {
+    const pengadaanPieData = Object.entries(pengadaanByStatus).map(([status, total]) => ({
         name: statusLabel[status] ?? status, value: total, status,
     }));
 
@@ -44,8 +44,8 @@ export default function TataKelolaDashboard({ stats, stockVsPermintaan, pembelia
                     {[
                         { label: 'Total Barang',         value: stats.totalBarangs,          icon: Box,          color: 'text-blue-500',   bg: 'bg-blue-50'   },
                         { label: 'Total Vendor',          value: stats.totalVendors,          icon: Store,        color: 'text-purple-500', bg: 'bg-purple-50' },
-                        { label: 'Pembelian Pending',     value: stats.pembelianPending,      icon: ShoppingCart, color: 'text-yellow-500', bg: 'bg-yellow-50' },
-                        { label: 'Pembelian Diproses',    value: stats.pembelianProses,       icon: PackageCheck, color: 'text-blue-500',   bg: 'bg-blue-50'   },
+                        { label: 'Pengadaan Pending',     value: stats.pengadaanPending,      icon: ShoppingCart, color: 'text-yellow-500', bg: 'bg-yellow-50' },
+                        { label: 'Pengadaan Diproses',    value: stats.pengadaanProses,       icon: PackageCheck, color: 'text-blue-500',   bg: 'bg-blue-50'   },
                         { label: 'Total Permintaan',      value: stats.totalJumlahPermintaan, icon: Box,          color: 'text-orange-500', bg: 'bg-orange-50' },
                         { label: 'Barang Defisit Stok',   value: stats.deficitCount,          icon: AlertTriangle,color: 'text-red-500',    bg: 'bg-red-50'    },
                     ].map(({ label, value, icon: Icon, color, bg }) => (
@@ -90,17 +90,17 @@ export default function TataKelolaDashboard({ stats, stockVsPermintaan, pembelia
 
                 {/* Pie + Deficit */}
                 <div className="grid gap-4 md:grid-cols-2">
-                    {/* Status Pembelian Pie */}
+                    {/* Status Pengadaan Pie */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Distribusi Status Pembelian</CardTitle>
+                            <CardTitle className="text-sm">Distribusi Status Pengadaan</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={220}>
                                 <PieChart>
-                                    <Pie data={pembelianPieData} cx="50%" cy="50%" outerRadius={85} dataKey="value"
+                                    <Pie data={pengadaanPieData} cx="50%" cy="50%" outerRadius={85} dataKey="value"
                                         label={({ name, value }) => `${name} (${value})`}>
-                                        {pembelianPieData.map((e) => (
+                                        {pengadaanPieData.map((e) => (
                                             <Cell key={e.status} fill={STATUS_COLORS[e.status] ?? '#94a3b8'} />
                                         ))}
                                     </Pie>
@@ -155,23 +155,23 @@ export default function TataKelolaDashboard({ stats, stockVsPermintaan, pembelia
                     </Card>
                 </div>
 
-                {/* Pembelian Menunggu */}
+                {/* Pengadaan Menunggu */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
-                                <CardTitle className="text-sm">Pembelian Perlu Tindak Lanjut</CardTitle>
+                                <CardTitle className="text-sm">Pengadaan Perlu Tindak Lanjut</CardTitle>
                                 <CardDescription>Pending &amp; sedang diproses</CardDescription>
                             </div>
-                            <Link href="/pembelians"><Button size="sm" variant="ghost" className="text-xs">Lihat Semua</Button></Link>
+                            <Link href="/pengadaan"><Button size="sm" variant="ghost" className="text-xs">Lihat Semua</Button></Link>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {pembelianMenunggu.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Tidak ada pembelian yang menunggu.</p>
+                        {pengadaanMenunggu.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">Tidak ada pengadaan yang menunggu.</p>
                         ) : (
                             <div className="space-y-2">
-                                {pembelianMenunggu.map((p: any) => (
+                                {pengadaanMenunggu.map((p: any) => (
                                     <div key={p.id} className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-accent transition-colors">
                                         <div>
                                             <p className="font-medium">{p.vendor?.nama_vendor ?? <span className="text-muted-foreground italic">Tanpa vendor</span>}</p>
@@ -181,7 +181,7 @@ export default function TataKelolaDashboard({ stats, stockVsPermintaan, pembelia
                                             <Badge style={{ backgroundColor: STATUS_COLORS[p.status] }} className="text-white">
                                                 {statusLabel[p.status] ?? p.status}
                                             </Badge>
-                                            <Link href={`/pembelians/${p.id}`}>
+                                            <Link href={`/pengadaan/${p.id}`}>
                                                 <Button size="sm" variant="outline" className="text-xs">Detail</Button>
                                             </Link>
                                         </div>

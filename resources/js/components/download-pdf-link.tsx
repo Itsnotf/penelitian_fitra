@@ -1,9 +1,8 @@
 import { FileDown } from 'lucide-react';
-import { Button } from './ui/button';
 
-export default function DownloadPdfLink({ id, type }: { id?: number; type: 'pembelians' | 'pengajuans' | 'barangs' }) {
+export default function DownloadPdfLink({ id, type }: { id?: number; type: 'pengadaan' | 'permintaan' | 'barangs' }) {
     const route = id ? `/${type}/${id}/download-pdf` : `/barangs/download-pdf`;
-    
+
     return (
         <a
             href={route}
@@ -11,7 +10,6 @@ export default function DownloadPdfLink({ id, type }: { id?: number; type: 'pemb
             rel="noopener noreferrer"
         >
             <FileDown />
-           
         </a>
     );
 }

@@ -16,8 +16,6 @@ import { Link } from '@inertiajs/react';
 import { Box, Inbox, KeyIcon, LayoutGrid, PackagePlus, Store, User } from 'lucide-react';
 import AppLogo from './app-logo';
 import barangs from '@/routes/barangs';
-import pembelians from '@/routes/pembelians';
-import pengajuans from '@/routes/pengajuans';
 import roles from '@/routes/roles';
 import users from '@/routes/users';
 
@@ -59,16 +57,16 @@ const barangManagement: NavItem[] = [
         permissions: ['vendors index'],
     },
     {
-        title: 'Pembelian',
-        href: pembelians.index(),
+        title: 'Pengadaan',
+        href: '/pengadaan',
         icon: PackagePlus,
-        permissions: ['pembelians index'],
+        permissions: ['pengadaan index'],
     },
     {
-        title: 'Pengajuan',
-        href: pengajuans.index(),
+        title: 'Permintaan',
+        href: '/permintaan',
         icon: Inbox,
-        permissions: ['pengajuans index'],
+        permissions: ['permintaan index'],
     },
 ];
 
