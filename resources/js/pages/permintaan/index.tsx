@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface Props {
-    permintaans: { data: Permintaan[]; links: any[] };
+    permintaan: { data: Permintaan[]; links: any[] };
     filters: { search?: string };
     flash?: { success?: string; error?: string };
 }
@@ -39,7 +39,7 @@ const urgensiBadge = (urgensi: string) => urgensi === 'mendesak'
     ? <Badge className="bg-red-600 text-white">Mendesak</Badge>
     : <Badge className="bg-slate-500 text-white">Normal</Badge>;
 
-export default function PermintaanPage({ permintaans, filters, flash }: Props) {
+export default function PermintaanPage({ permintaan, filters, flash }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [shownMessages] = useState(new Set<string>());
 
@@ -90,12 +90,12 @@ export default function PermintaanPage({ permintaans, filters, flash }: Props) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {permintaans.data.length === 0 ? (
+                        {permintaan.data.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-[65vh] text-center">Belum ada data permintaan.</TableCell>
                             </TableRow>
                         ) : (
-                            permintaans.data.map((permintaan) => (
+                            permintaan.data.map((permintaan) => (
                                 <TableRow key={permintaan.id}>
                                     <TableCell>{permintaan.user.name}</TableCell>
                                     <TableCell className="max-w-sm truncate">{permintaan.deskripsi}</TableCell>
@@ -177,7 +177,7 @@ export default function PermintaanPage({ permintaans, filters, flash }: Props) {
                 </Table>
 
                 <div className="flex gap-1">
-                    {permintaans.links.map((link, i) => (
+                    {permintaan.links.map((link, i) => (
                         <Link key={i} href={link.url ?? '#'}
                             className={`px-3 py-1 flex justify-center items-center border rounded-md text-sm ${link.active ? 'bg-primary text-primary-foreground' : ''}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
