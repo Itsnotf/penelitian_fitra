@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\BarangPengadaan;
+namespace App\Http\Requests\BarangPermintaan;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -15,7 +15,6 @@ class UpdateRequest extends FormRequest
     {
         return [
             'barang_id' => 'required|exists:barangs,id',
-            'harga'     => 'required|integer|min:0',
             'jumlah'    => 'required|integer|min:1',
         ];
     }

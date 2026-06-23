@@ -6,9 +6,9 @@ use App\Http\Requests\BarangPengadaan\StoreRequest;
 use App\Http\Requests\BarangPengadaan\UpdateRequest;
 use App\Models\Barang_Pengadaan;
 use App\Models\Barangs;
-use App\Models\Pengadaan;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class BarangPengadaanController extends Controller implements HasMiddleware
@@ -24,7 +24,13 @@ class BarangPengadaanController extends Controller implements HasMiddleware
 
     public function create(string $pengadaan_id)
     {
-        $barangs = Barangs::all();
+        $existingBarangIds = Barang_Pengadaan::where('pengadaan_id', $pengadaan_id)->pluck('barang_id');
+
+        $barangs = Barangs::with('tipeBarang:id,nama_tipe')
+            ->whereNotIn('id', $existingBarangIds)
+            ->orderBy('nama_barang')
+            ->get(['id', 'nama_barang', 'satuan', 'tipe_barang_id']);
+
         return Inertia::render('pengadaan/barangs/create', [
             'pengadaan_id' => $pengadaan_id,
             'barangs'      => $barangs,
@@ -33,10 +39,16 @@ class BarangPengadaanController extends Controller implements HasMiddleware
 
     public function store(string $pengadaan_id, StoreRequest $request)
     {
-        $validated = $request->validated();
-        $validated['pembelian_id'] = $pengadaan_id;
-
-        Barang_Pengadaan::create($validated);
+        DB::transaction(function () use ($pengadaan_id, $request) {
+            foreach ($request->validated('items') as $item) {
+                Barang_Pengadaan::create([
+                    'pengadaan_id' => $pengadaan_id,
+                    'barang_id'    => $item['barang_id'],
+                    'jumlah'       => $item['jumlah'],
+                    'harga'        => $item['harga'],
+                ]);
+            }
+        });
 
         return redirect()->route('pengadaan.show', $pengadaan_id)->with('success', 'Barang pengadaan berhasil ditambahkan.');
     }
@@ -44,11 +56,15 @@ class BarangPengadaanController extends Controller implements HasMiddleware
     public function edit(string $pengadaan_id, string $barang_Pengadaan_id)
     {
         $barang_Pengadaan = Barang_Pengadaan::findOrFail($barang_Pengadaan_id);
-        $barangs = Barangs::all();
+
+        $barangs = Barangs::with('tipeBarang:id,nama_tipe')
+            ->orderBy('nama_barang')
+            ->get(['id', 'nama_barang', 'satuan', 'tipe_barang_id']);
+
         return Inertia::render('pengadaan/barangs/edit', [
-            'pengadaan_id'    => $pengadaan_id,
-            'barang_pengadaan' => $barang_Pengadaan,
-            'barangs'         => $barangs,
+            'pengadaan_id'      => $pengadaan_id,
+            'barang_pengadaan'  => $barang_Pengadaan,
+            'barangs'           => $barangs,
         ]);
     }
 

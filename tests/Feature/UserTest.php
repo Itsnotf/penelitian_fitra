@@ -102,3 +102,41 @@ test('destroy deletes a user', function () {
     $response->assertRedirect(route('users.index'));
     $this->assertDatabaseMissing('users', ['email' => 'todelete@example.com']);
 });
+
+test('update succeeds without password and keeps the old password unchanged', function () {
+    $auth = User::factory()->create(['email_verified_at' => now()]);
+    $auth->givePermissionTo('users edit');
+
+    $user = User::factory()->create([
+        'name'     => 'Old Name',
+        'email'    => 'keep-password@example.com',
+        'password' => 'original-password',
+    ]);
+    $originalHashedPassword = $user->password;
+
+    Role::create(['name' => 'user']);
+
+    $response = $this->actingAs($auth)->put(route('users.update', $user->id), [
+        'name'  => 'New Name',
+        'email' => 'keep-password@example.com',
+        'role'  => 'user',
+        // sengaja tidak mengirim 'password' sama sekali
+    ]);
+
+    $response->assertSessionDoesntHaveErrors(['password']);
+    $response->assertRedirect(route('users.index'));
+
+    $user->refresh();
+    expect($user->name)->toBe('New Name');
+    expect($user->password)->toBe($originalHashedPassword);
+});
+
+test('User model has working pengadaan() and permintaan() relations (regression: was dead code)', function () {
+    $user = User::factory()->create();
+
+    \App\Models\Pengadaan::factory()->create(['user_id' => $user->id]);
+    \App\Models\Permintaan::factory()->create(['user_id' => $user->id]);
+
+    expect($user->pengadaan)->toHaveCount(1);
+    expect($user->permintaan)->toHaveCount(1);
+});

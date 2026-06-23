@@ -1,5 +1,6 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -143,34 +144,20 @@ export default function PermintaanCreatePage({ barangs }: Props) {
                                     return (
                                         <TableRow key={index}>
                                             <TableCell>
-                                                <Select
+                                                <Combobox
                                                     value={item.barang_id}
                                                     onValueChange={(v) => updateItem(index, 'barang_id', v)}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Pilih barang..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {rowBarangs.length === 0 ? (
-                                                            <div className="py-2 px-3 text-sm text-muted-foreground">
-                                                                Tidak ada barang untuk tipe ini.
-                                                            </div>
-                                                        ) : (
-                                                            rowBarangs.map((b) => (
-                                                                <SelectItem
-                                                                    key={b.id}
-                                                                    value={b.id.toString()}
-                                                                    disabled={
-                                                                        selectedBarangIds.includes(b.id.toString()) &&
-                                                                        item.barang_id !== b.id.toString()
-                                                                    }
-                                                                >
-                                                                    {b.nama_barang}
-                                                                </SelectItem>
-                                                            ))
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
+                                                    placeholder="Pilih barang..."
+                                                    searchPlaceholder="Cari barang..."
+                                                    emptyText="Tidak ada barang untuk tipe ini."
+                                                    options={rowBarangs.map((b) => ({
+                                                        value: b.id.toString(),
+                                                        label: b.nama_barang,
+                                                        disabled:
+                                                            selectedBarangIds.includes(b.id.toString()) &&
+                                                            item.barang_id !== b.id.toString(),
+                                                    }))}
+                                                />
                                                 <InputError message={(errors as Record<string, string>)[`items.${index}.barang_id`]} />
                                             </TableCell>
                                             <TableCell>
