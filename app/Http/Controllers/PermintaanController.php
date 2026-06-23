@@ -66,7 +66,9 @@ class PermintaanController extends Controller implements HasMiddleware
 
     public function create()
     {
-        $barangs = Barangs::orderBy('nama_barang')->get(['id', 'nama_barang', 'satuan', 'tipe']);
+        $barangs = Barangs::with('tipeBarang:id,nama_tipe')
+            ->orderBy('nama_barang')
+            ->get(['id', 'nama_barang', 'satuan', 'tipe_barang_id']);
         return Inertia::render('permintaan/create', [
             'barangs' => $barangs,
         ]);

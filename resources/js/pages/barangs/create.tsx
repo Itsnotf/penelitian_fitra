@@ -5,20 +5,23 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem } from '@/types';
+import { BreadcrumbItem, TipeBarang } from '@/types';
 import { Form, Head, Link } from '@inertiajs/react';
-import barangs, { store } from '@/routes/barangs';
+
+interface Props {
+    tipeBarangs: Pick<TipeBarang, 'id' | 'nama_tipe'>[];
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Inventaris', href: barangs.index().url },
-    { title: 'Tambah Barang', href: barangs.create().url },
+    { title: 'Inventaris', href: '/barangs' },
+    { title: 'Tambah Barang', href: '/barangs/create' },
 ];
 
-export default function BarangCreatePage() {
+export default function BarangCreatePage({ tipeBarangs }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Tambah Barang" />
-            <Form {...store.form()} disableWhileProcessing className="flex flex-col gap-6 p-4">
+            <Form method="post" action="/barangs" disableWhileProcessing className="flex flex-col gap-6 p-4">
                 {({ processing, errors }) => (
                     <div className="grid gap-6 max-w-lg">
                         <div className="grid gap-2">
@@ -28,17 +31,43 @@ export default function BarangCreatePage() {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="tipe">Tipe Barang</Label>
-                            <Select name="tipe" required>
+                            <Label htmlFor="tipe_barang_id">Tipe Barang</Label>
+                            <Select name="tipe_barang_id" required>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Pilih tipe" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="ATK">Alat Tulis Kantor</SelectItem>
-                                    <SelectItem value="ELEKTRONIK">Elektronik</SelectItem>
+                                    {tipeBarangs.length === 0 ? (
+                                        <div className="py-2 px-3 text-sm text-muted-foreground">
+                                            Belum ada tipe barang. Tambahkan dulu di menu Tipe Barang.
+                                        </div>
+                                    ) : (
+                                        tipeBarangs.map((tipe) => (
+                                            <SelectItem key={tipe.id} value={tipe.id.toString()}>{tipe.nama_tipe}</SelectItem>
+                                        ))
+                                    )}
                                 </SelectContent>
                             </Select>
-                            <InputError message={errors.tipe} />
+                            <InputError message={errors.tipe_barang_id} />
+                            <p className="text-xs text-muted-foreground">
+                                Tidak menemukan tipe yang sesuai? Tambahkan di menu{' '}
+                                <Link href="/tipe-barangs/create" className="underline">Tipe Barang</Link>.
+                            </p>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="jenis_barang">Jenis Barang (Durasi Pakai)</Label>
+                            <Select name="jenis_barang" required>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih jenis" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="pendek">Pendek</SelectItem>
+                                    <SelectItem value="sedang">Sedang</SelectItem>
+                                    <SelectItem value="panjang">Panjang</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError message={errors.jenis_barang} />
                         </div>
 
                         <div className="grid gap-2">

@@ -5,24 +5,24 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import AppLayout from '@/layouts/app-layout';
-import { Barang, BreadcrumbItem } from '@/types';
+import { Barang, BreadcrumbItem, TipeBarang } from '@/types';
 import { Form, Head, Link } from '@inertiajs/react';
-import barangs, { update } from '@/routes/barangs';
 
 interface Props {
     barang: Barang;
+    tipeBarangs: Pick<TipeBarang, 'id' | 'nama_tipe'>[];
 }
 
-export default function BarangEditPage({ barang }: Props) {
+export default function BarangEditPage({ barang, tipeBarangs }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Inventaris', href: barangs.index().url },
-        { title: 'Edit Barang', href: barangs.edit(barang.id).url },
+        { title: 'Inventaris', href: '/barangs' },
+        { title: 'Edit Barang', href: `/barangs/${barang.id}/edit` },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit Barang" />
-            <Form {...update.form(barang.id)} disableWhileProcessing className="flex flex-col gap-6 p-4">
+            <Form method="put" action={`/barangs/${barang.id}`} disableWhileProcessing className="flex flex-col gap-6 p-4">
                 {({ processing, errors }) => (
                     <div className="grid gap-6 max-w-lg">
                         <div className="grid gap-2">
@@ -32,17 +32,33 @@ export default function BarangEditPage({ barang }: Props) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="tipe">Tipe Barang</Label>
-                            <Select name="tipe" defaultValue={barang.tipe} required>
+                            <Label htmlFor="tipe_barang_id">Tipe Barang</Label>
+                            <Select name="tipe_barang_id" defaultValue={barang.tipe_barang_id.toString()} required>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Pilih tipe" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="ATK">Alat Tulis Kantor</SelectItem>
-                                    <SelectItem value="ELEKTRONIK">Elektronik</SelectItem>
+                                    {tipeBarangs.map((tipe) => (
+                                        <SelectItem key={tipe.id} value={tipe.id.toString()}>{tipe.nama_tipe}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
-                            <InputError message={errors.tipe} />
+                            <InputError message={errors.tipe_barang_id} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="jenis_barang">Jenis Barang (Durasi Pakai)</Label>
+                            <Select name="jenis_barang" defaultValue={barang.jenis_barang ?? undefined} required>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih jenis" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="pendek">Pendek</SelectItem>
+                                    <SelectItem value="sedang">Sedang</SelectItem>
+                                    <SelectItem value="panjang">Panjang</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError message={errors.jenis_barang} />
                         </div>
 
                         <div className="grid gap-2">

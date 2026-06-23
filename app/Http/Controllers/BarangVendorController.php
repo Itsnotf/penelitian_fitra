@@ -25,7 +25,7 @@ class BarangVendorController extends Controller implements HasMiddleware
     {
         $vendor = Vendor::findOrFail($vendor_id);
 
-        $barangVendors = BarangVendor::with('barang')
+        $barangVendors = BarangVendor::with('barang.tipeBarang')
             ->where('vendor_id', $vendor_id)
             ->when($request->search, function ($q, $s) {
                 $q->whereHas('barang', fn($b) => $b->where('nama_barang', 'like', "%{$s}%"));
@@ -46,7 +46,9 @@ class BarangVendorController extends Controller implements HasMiddleware
         $vendor = Vendor::findOrFail($vendor_id);
 
         $existingBarangIds = BarangVendor::where('vendor_id', $vendor_id)->pluck('barang_id');
-        $barangs = Barangs::whereNotIn('id', $existingBarangIds)->get(['id', 'nama_barang', 'satuan', 'tipe']);
+        $barangs = Barangs::with('tipeBarang:id,nama_tipe')
+            ->whereNotIn('id', $existingBarangIds)
+            ->get(['id', 'nama_barang', 'satuan', 'tipe_barang_id']);
 
         return Inertia::render('vendors/barangs/create', [
             'vendor'  => $vendor,
@@ -76,7 +78,7 @@ class BarangVendorController extends Controller implements HasMiddleware
     public function edit(string $vendor_id, string $barang_vendor_id)
     {
         $vendor       = Vendor::findOrFail($vendor_id);
-        $barangVendor = BarangVendor::with('barang')->findOrFail($barang_vendor_id);
+        $barangVendor = BarangVendor::with('barang.tipeBarang')->findOrFail($barang_vendor_id);
 
         return Inertia::render('vendors/barangs/edit', [
             'vendor'       => $vendor,

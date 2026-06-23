@@ -14,10 +14,11 @@ class UpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama_barang' => 'required|string|max:255',
-            'tipe'        => 'required|string|max:255',
-            'satuan'      => 'required|string|max:50',
-            'stock_awal'  => 'required|integer|min:0',
+            'nama_barang'    => 'required|string|max:255',
+            'tipe_barang_id' => 'required|exists:tipe_barangs,id',
+            'jenis_barang'   => 'required|in:pendek,sedang,panjang',
+            'satuan'         => 'required|string|max:50',
+            'stock_awal'     => 'required|integer|min:0',
         ];
     }
 }

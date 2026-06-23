@@ -13,6 +13,7 @@ class PermissionSeeder extends Seeder
             'users index', 'users create', 'users edit', 'users delete',
             'roles index', 'roles create', 'roles edit', 'roles delete',
             'barangs index', 'barangs create', 'barangs edit', 'barangs delete',
+            'tipe barangs index', 'tipe barangs create', 'tipe barangs edit', 'tipe barangs delete',
             'vendors index', 'vendors create', 'vendors edit', 'vendors delete',
             'vendors barang create', 'vendors barang edit', 'vendors barang delete',
             'pengadaan index', 'pengadaan create', 'pengadaan edit', 'pengadaan delete',

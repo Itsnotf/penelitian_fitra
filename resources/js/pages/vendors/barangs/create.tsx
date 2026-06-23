@@ -43,7 +43,7 @@ export default function VendorBarangCreatePage({ vendor, barangs }: Props) {
                                     <SelectContent>
                                         {barangs.map((b) => (
                                             <SelectItem key={b.id} value={b.id.toString()}>
-                                                {b.nama_barang} ({b.satuan}) — {b.tipe}
+                                                {b.nama_barang} ({b.satuan}) — {b.tipe_barang?.nama_tipe ?? 'Tanpa tipe'}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

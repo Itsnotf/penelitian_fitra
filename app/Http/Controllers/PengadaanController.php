@@ -49,7 +49,9 @@ class PengadaanController extends Controller implements HasMiddleware
     public function create()
     {
         $vendors = Vendor::orderBy('nama_vendor')->get(['id', 'nama_vendor']);
-        $barangs = Barangs::orderBy('nama_barang')->get(['id', 'nama_barang', 'satuan', 'tipe']);
+        $barangs = Barangs::with('tipeBarang:id,nama_tipe')
+            ->orderBy('nama_barang')
+            ->get(['id', 'nama_barang', 'satuan', 'tipe_barang_id']);
 
         $allVendorPrices = BarangVendor::all(['vendor_id', 'barang_id', 'harga'])
             ->groupBy('vendor_id')

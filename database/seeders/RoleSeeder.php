@@ -20,6 +20,7 @@ class RoleSeeder extends Seeder
         $tataKelola->givePermissionTo([
             'dashboard',
             'barangs index',
+            'tipe barangs index', 'tipe barangs create', 'tipe barangs edit', 'tipe barangs delete',
             'vendors index', 'vendors create', 'vendors edit', 'vendors delete',
             'vendors barang create', 'vendors barang edit', 'vendors barang delete',
             'pengadaan index', 'pengadaan create', 'pengadaan edit', 'pengadaan delete',

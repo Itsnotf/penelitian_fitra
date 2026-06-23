@@ -86,10 +86,21 @@ export interface BarangVendor {
     barang?: Barang;
 }
 
+export interface TipeBarang {
+    id: number;
+    nama_tipe: string;
+    created_at: string;
+    updated_at: string;
+    barangs_count?: number;
+}
+
+export type JenisBarang = 'pendek' | 'sedang' | 'panjang';
+
 export interface Barang {
     id: number;
     nama_barang: string;
-    tipe: string;
+    tipe_barang_id: number;
+    jenis_barang: JenisBarang | null;
     satuan: string;
     stock_awal: number;
     stock_masuk: number;
@@ -98,6 +109,7 @@ export interface Barang {
     jumlah_permintaan: number;
     created_at: string;
     updated_at: string;
+    tipe_barang?: TipeBarang;
 }
 
 export interface Pengadaan {

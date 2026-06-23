@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Box, Inbox, KeyIcon, LayoutGrid, PackagePlus, Store, User } from 'lucide-react';
+import { Box, Inbox, KeyIcon, LayoutGrid, PackagePlus, Store, Tag, User } from 'lucide-react';
 import AppLogo from './app-logo';
 import barangs from '@/routes/barangs';
 import roles from '@/routes/roles';
@@ -49,6 +49,12 @@ const barangManagement: NavItem[] = [
         href: barangs.index(),
         icon: Box,
         permissions: ['barangs index'],
+    },
+    {
+        title: 'Tipe Barang',
+        href: '/tipe-barangs',
+        icon: Tag,
+        permissions: ['tipe barangs index'],
     },
     {
         title: 'Vendor',

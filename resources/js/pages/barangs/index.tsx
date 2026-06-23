@@ -1,13 +1,13 @@
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { Link, Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import BarangDownloadFilter from '@/components/barang-download-filter';
 import DeleteButton from '@/components/delete-button';
-import { AlertTriangle, CheckCircle2, Edit2Icon, PlusCircle, ShoppingCart } from 'lucide-react';
-import { Barang, BreadcrumbItem } from '@/types';
+import { AlertTriangle, CheckCircle2, Download, Edit2Icon, PlusCircle, ShoppingCart } from 'lucide-react';
+import { Barang, BreadcrumbItem, JenisBarang, TipeBarang } from '@/types';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -24,20 +24,36 @@ import {
 import { Badge } from '@/components/ui/badge';
 import hasAnyPermission from '@/lib/utils';
 
+interface Filters {
+    search?: string;
+    tipe_barang_id?: string;
+    jenis_barang?: JenisBarang;
+    stok?: 'semua' | 'rendah' | 'habis';
+}
+
 interface Props {
     barangs: { data: Barang[]; links: any[] };
-    filters: { search?: string };
+    filters: Filters;
     hasJumlahPermintaan: boolean;
     allStockSufficient: boolean;
     flash?: { success?: string; error?: string };
     can: { approveAllNormal: boolean; buatPengadaanSelisih: boolean };
-    tipeOptions: string[];
+    tipeBarangs: Pick<TipeBarang, 'id' | 'nama_tipe'>[];
 }
+
+const jenisLabel: Record<JenisBarang, string> = {
+    pendek: 'Pendek',
+    sedang: 'Sedang',
+    panjang: 'Panjang',
+};
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Inventaris', href: '/barangs' }];
 
-export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaan, allStockSufficient, can, tipeOptions }: Props) {
+export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaan, allStockSufficient, can, tipeBarangs }: Props) {
     const [search, setSearch] = useState(filters.search || '');
+    const [tipeBarangId, setTipeBarangId] = useState(filters.tipe_barang_id || '_semua');
+    const [jenisBarang, setJenisBarang] = useState(filters.jenis_barang || '_semua');
+    const [stok, setStok] = useState(filters.stok || 'semua');
     const [shownMessages] = useState(new Set<string>());
 
     useEffect(() => {
@@ -51,9 +67,29 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
         }
     }, [flash?.success, flash?.error]);
 
+    const applyFilters = (overrides: Partial<{ search: string; tipeBarangId: string; jenisBarang: string; stok: string }> = {}) => {
+        const next = {
+            search: overrides.search ?? search,
+            tipe_barang_id: overrides.tipeBarangId ?? tipeBarangId,
+            jenis_barang: overrides.jenisBarang ?? jenisBarang,
+            stok: overrides.stok ?? stok,
+        };
+
+        router.get(
+            '/barangs',
+            {
+                search: next.search || undefined,
+                tipe_barang_id: next.tipe_barang_id !== '_semua' ? next.tipe_barang_id : undefined,
+                jenis_barang: next.jenis_barang !== '_semua' ? next.jenis_barang : undefined,
+                stok: next.stok !== 'semua' ? next.stok : undefined,
+            },
+            { preserveState: true },
+        );
+    };
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/barangs', { search }, { preserveState: true });
+        applyFilters();
     };
 
     const handleApproveAllNormal = () => {
@@ -64,16 +100,61 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
         router.post('/permintaan/buat-pengadaan-selisih', {}, { onSuccess: () => {}, onError: () => {} });
     };
 
+    // Laporan PDF mengikuti filter yang SEDANG aktif (yang sudah diterapkan
+    // lewat query string), bukan filter terpisah — satu sumber filter.
+    const downloadParams = new URLSearchParams();
+    if (filters.search) downloadParams.set('search', filters.search);
+    if (filters.tipe_barang_id) downloadParams.set('tipe_barang_id', filters.tipe_barang_id);
+    if (filters.jenis_barang) downloadParams.set('jenis_barang', filters.jenis_barang);
+    if (filters.stok) downloadParams.set('stok', filters.stok);
+    const downloadUrl = `/barangs/download-pdf${downloadParams.toString() ? '?' + downloadParams.toString() : ''}`;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inventaris Barang" />
 
             <div className="p-4 space-y-4">
-                <div className="flex flex-wrap gap-2">
-                    <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-1/3">
+                <div className="flex flex-wrap items-end gap-2">
+                    <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-auto md:flex-1 min-w-[220px]">
                         <Input placeholder="Cari nama barang..." value={search} onChange={(e) => setSearch(e.target.value)} />
                         <Button variant="outline" type="submit">Cari</Button>
                     </form>
+
+                    <Select value={tipeBarangId} onValueChange={(v) => { setTipeBarangId(v); applyFilters({ tipeBarangId: v }); }}>
+                        <SelectTrigger className="w-44"><SelectValue placeholder="Tipe barang" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="_semua">Semua tipe</SelectItem>
+                            {tipeBarangs.map((tipe) => (
+                                <SelectItem key={tipe.id} value={tipe.id.toString()}>{tipe.nama_tipe}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={jenisBarang} onValueChange={(v) => { setJenisBarang(v); applyFilters({ jenisBarang: v }); }}>
+                        <SelectTrigger className="w-40"><SelectValue placeholder="Jenis barang" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="_semua">Semua jenis</SelectItem>
+                            <SelectItem value="pendek">Pendek</SelectItem>
+                            <SelectItem value="sedang">Sedang</SelectItem>
+                            <SelectItem value="panjang">Panjang</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={stok} onValueChange={(v) => { setStok(v as 'semua' | 'rendah' | 'habis'); applyFilters({ stok: v }); }}>
+                        <SelectTrigger className="w-40"><SelectValue placeholder="Status stok" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="semua">Semua stok</SelectItem>
+                            <SelectItem value="rendah">Stok Rendah (&lt; 10)</SelectItem>
+                            <SelectItem value="habis">Stok Habis</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline">
+                            <Download size={16} className="mr-2" />
+                            Unduh Laporan
+                        </Button>
+                    </a>
 
                     {hasAnyPermission(['barangs create']) && (
                         <Link href="/barangs/create">
@@ -83,8 +164,6 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
                             </Button>
                         </Link>
                     )}
-
-                    <BarangDownloadFilter tipeOptions={tipeOptions} />
 
                     {can.approveAllNormal && hasJumlahPermintaan && (
                         <AlertDialog>
@@ -153,6 +232,7 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
                         <TableRow>
                             <TableHead>Nama Barang</TableHead>
                             <TableHead>Tipe</TableHead>
+                            <TableHead>Jenis</TableHead>
                             <TableHead>Satuan</TableHead>
                             <TableHead>Stok Awal</TableHead>
                             <TableHead>Stok Masuk</TableHead>
@@ -165,7 +245,7 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
                     <TableBody>
                         {barangs.data.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={9} className="h-[65vh] text-center">Belum ada data barang.</TableCell>
+                                <TableCell colSpan={10} className="h-[65vh] text-center">Belum ada data barang.</TableCell>
                             </TableRow>
                         ) : (
                             barangs.data.map((barang) => {
@@ -173,7 +253,12 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
                                 return (
                                     <TableRow key={barang.id} className={isDeficit ? 'bg-orange-50' : ''}>
                                         <TableCell>{barang.nama_barang}</TableCell>
-                                        <TableCell>{barang.tipe}</TableCell>
+                                        <TableCell>{barang.tipe_barang?.nama_tipe ?? '—'}</TableCell>
+                                        <TableCell>
+                                            {barang.jenis_barang ? (
+                                                <Badge variant="outline">{jenisLabel[barang.jenis_barang]}</Badge>
+                                            ) : '—'}
+                                        </TableCell>
                                         <TableCell>{barang.satuan}</TableCell>
                                         <TableCell>{barang.stock_awal}</TableCell>
                                         <TableCell>{barang.stock_masuk}</TableCell>

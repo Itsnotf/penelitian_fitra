@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PengadaanController;
 use App\Http\Controllers\PermintaanController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\TipeBarangController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('users', UserController::class);
     Route::resource('roles', RoleController::class);
+
+    Route::resource('tipe-barangs', TipeBarangController::class);
 
     Route::get('barangs/download-pdf', [BarangsController::class, 'downloadPdf'])->name('barangs.downloadPdf');
     Route::resource('barangs', BarangsController::class);

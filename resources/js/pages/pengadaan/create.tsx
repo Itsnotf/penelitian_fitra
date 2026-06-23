@@ -15,7 +15,9 @@ import { useState } from 'react';
 
 interface Props {
     vendors: Pick<Vendor, 'id' | 'nama_vendor'>[];
-    barangs: Pick<Barang, 'id' | 'nama_barang' | 'satuan' | 'tipe'>[];
+    barangs: (Pick<Barang, 'id' | 'nama_barang' | 'satuan' | 'tipe_barang_id'> & {
+        tipe_barang?: { id: number; nama_tipe: string };
+    })[];
     allVendorPrices: Record<string, Record<string, number>>;
 }
 
@@ -45,13 +47,17 @@ export default function PengadaanCreatePage({ vendors, barangs, allVendorPrices 
 
     const [filterTipe, setFilterTipe] = useState<string>('_semua');
 
-    const tipeOptions = [...new Set(barangs.map((b) => b.tipe))].sort();
+    const tipeOptions = Array.from(
+        new Map(
+            barangs.filter((b) => b.tipe_barang).map((b) => [b.tipe_barang!.id, b.tipe_barang!.nama_tipe]),
+        ).entries(),
+    ).sort((a, b) => a[1].localeCompare(b[1]));
 
     const getBarangsForRow = (currentBarangId: string) =>
         barangs.filter(
             (b) =>
                 filterTipe === '_semua' ||
-                b.tipe === filterTipe ||
+                b.tipe_barang_id.toString() === filterTipe ||
                 b.id.toString() === currentBarangId,
         );
 
@@ -156,8 +162,8 @@ export default function PengadaanCreatePage({ vendors, barangs, allVendorPrices 
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="_semua">Semua tipe</SelectItem>
-                                    {tipeOptions.map((tipe) => (
-                                        <SelectItem key={tipe} value={tipe}>{tipe}</SelectItem>
+                                    {tipeOptions.map(([id, nama]) => (
+                                        <SelectItem key={id} value={id.toString()}>{nama}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>

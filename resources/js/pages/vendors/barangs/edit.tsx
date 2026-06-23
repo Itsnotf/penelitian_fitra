@@ -35,7 +35,7 @@ export default function VendorBarangEditPage({ vendor, barangVendor }: Props) {
                             <div className="rounded-md border bg-muted/20 px-3 py-2 text-sm">
                                 <span className="font-medium">{barangVendor.barang?.nama_barang}</span>
                                 <span className="ml-2 text-muted-foreground">
-                                    {barangVendor.barang?.satuan} · {barangVendor.barang?.tipe}
+                                    {barangVendor.barang?.satuan} · {barangVendor.barang?.tipe_barang?.nama_tipe ?? 'Tanpa tipe'}
                                 </span>
                             </div>
                         </div>

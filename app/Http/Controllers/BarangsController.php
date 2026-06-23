@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Barang\StoreRequest;
 use App\Http\Requests\Barang\UpdateRequest;
 use App\Models\Barangs;
+use App\Models\TipeBarang;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -24,9 +25,15 @@ class BarangsController extends Controller implements HasMiddleware
         ];
     }
 
+    private function filterParams(Request $request): array
+    {
+        return $request->only(['search', 'tipe_barang_id', 'jenis_barang', 'stok']);
+    }
+
     public function index(Request $request)
     {
-        $barangs = Barangs::when($request->search, fn($q, $s) => $q->where('nama_barang', 'like', "%{$s}%"))
+        $barangs = Barangs::with('tipeBarang')
+            ->filtered($this->filterParams($request))
             ->paginate(8)
             ->withQueryString();
 
@@ -37,21 +44,23 @@ class BarangsController extends Controller implements HasMiddleware
 
         return Inertia::render('barangs/index', [
             'barangs'             => $barangs,
-            'filters'             => $request->only('search'),
+            'filters'             => $this->filterParams($request),
             'hasJumlahPermintaan' => $hasJumlahPermintaan,
             'allStockSufficient'  => $allStockSufficient,
             'flash'               => ['success' => session('success'), 'error' => session('error')],
             'can'                 => [
-                'approveAllNormal'    => $request->user()?->can('permintaan approve all normal'),
+                'approveAllNormal'     => $request->user()?->can('permintaan approve all normal'),
                 'buatPengadaanSelisih' => $request->user()?->can('permintaan buat pengadaan selisih'),
             ],
-            'tipeOptions'         => Barangs::distinct()->orderBy('tipe')->pluck('tipe'),
+            'tipeBarangs' => TipeBarang::orderBy('nama_tipe')->get(['id', 'nama_tipe']),
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('barangs/create');
+        return Inertia::render('barangs/create', [
+            'tipeBarangs' => TipeBarang::orderBy('nama_tipe')->get(['id', 'nama_tipe']),
+        ]);
     }
 
     public function store(StoreRequest $request)
@@ -69,7 +78,11 @@ class BarangsController extends Controller implements HasMiddleware
     public function edit(string $id)
     {
         $barang = Barangs::findOrFail($id);
-        return Inertia::render('barangs/edit', ['barang' => $barang]);
+
+        return Inertia::render('barangs/edit', [
+            'barang'      => $barang,
+            'tipeBarangs' => TipeBarang::orderBy('nama_tipe')->get(['id', 'nama_tipe']),
+        ]);
     }
 
     public function update(UpdateRequest $request, string $id)
@@ -87,17 +100,22 @@ class BarangsController extends Controller implements HasMiddleware
         return redirect()->route('barangs.index')->with('success', 'Barang berhasil dihapus.');
     }
 
+    /**
+     * Mengikuti filter yang sedang aktif di halaman index (satu sumber
+     * filter) — parameter yang dikirim persis sama dengan query string
+     * yang sedang dipakai di /barangs.
+     */
     public function downloadPdf(Request $request)
     {
         $request->validate([
-            'tipe' => 'nullable|string',
-            'stok' => 'nullable|in:semua,rendah,habis',
+            'search'         => 'nullable|string',
+            'tipe_barang_id' => 'nullable|exists:tipe_barangs,id',
+            'jenis_barang'   => 'nullable|in:pendek,sedang,panjang',
+            'stok'           => 'nullable|in:semua,rendah,habis',
         ]);
 
-        $barangs = Barangs::query()
-            ->when($request->tipe, fn($q, $v) => $q->where('tipe', $v))
-            ->when($request->stok === 'rendah', fn($q) => $q->where('stock_tersedia', '<', 10)->where('stock_tersedia', '>', 0))
-            ->when($request->stok === 'habis',  fn($q) => $q->where('stock_tersedia', 0))
+        $barangs = Barangs::with('tipeBarang')
+            ->filtered($this->filterParams($request))
             ->orderBy('nama_barang')
             ->get();
 
@@ -110,24 +128,41 @@ class BarangsController extends Controller implements HasMiddleware
 
         $pdf = Pdf::loadHTML($html)->setPaper('A4', 'portrait');
 
-        $filename = 'Laporan-Barang-' . date('Y-m-d');
-        if ($request->tipe) $filename .= '-' . str_replace(' ', '_', $request->tipe);
-        if ($request->stok && $request->stok !== 'semua') $filename .= '-stok_' . $request->stok;
-
-        return $pdf->download($filename . '.pdf');
+        return $pdf->download('Laporan-Barang-' . date('Y-m-d') . '.pdf');
     }
 
     private function buildFilterInfo(Request $request): string
     {
         $parts = [];
-        if ($request->tipe) $parts[] = 'Tipe: ' . $request->tipe;
+
+        if ($request->search) {
+            $parts[] = 'Pencarian: ' . $request->search;
+        }
+
+        if ($request->tipe_barang_id) {
+            $namaTipe = TipeBarang::find($request->tipe_barang_id)?->nama_tipe;
+            if ($namaTipe) {
+                $parts[] = 'Tipe: ' . $namaTipe;
+            }
+        }
+
+        if ($request->jenis_barang) {
+            $parts[] = 'Jenis: ' . match ($request->jenis_barang) {
+                'pendek'  => 'Pendek',
+                'sedang'  => 'Sedang',
+                'panjang' => 'Panjang',
+                default   => $request->jenis_barang,
+            };
+        }
+
         if ($request->stok && $request->stok !== 'semua') {
-            $parts[] = 'Stok: ' . match($request->stok) {
+            $parts[] = 'Stok: ' . match ($request->stok) {
                 'rendah' => 'Stok Rendah (< 10)',
                 'habis'  => 'Stok Habis',
                 default  => $request->stok,
             };
         }
+
         return $parts ? implode(' | ', $parts) : 'Semua barang';
     }
 }
