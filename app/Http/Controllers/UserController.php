@@ -79,8 +79,14 @@ class UserController extends Controller implements HasMiddleware
     public function update(UpdateUserRequest $request, string $id)
     {
         $user = User::findOrFail($id);
-        $user->update($request->all());
 
+        $data = $request->validated();
+
+        if (empty($data['password'])) {
+            unset($data['password'], $data['password_confirmation']);
+        }
+
+        $user->update($data);
         $user->syncRoles($request->role);
 
         return redirect()->route("users.index")->with("success", "users updated successfully");

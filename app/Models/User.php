@@ -56,8 +56,13 @@ class User extends Authenticatable
         return $this->getAllPermissions()->mapWithKeys(fn($permission) => [$permission['name'] => true]);
     }
 
-    public function pembelians()
+    public function pengadaan()
     {
-        return $this->hasMany(Pembelians::class);
+        return $this->hasMany(Pengadaan::class);
+    }
+
+    public function permintaan()
+    {
+        return $this->hasMany(Permintaan::class);
     }
 }

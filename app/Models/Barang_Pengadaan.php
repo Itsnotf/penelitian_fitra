@@ -11,7 +11,7 @@ class Barang_Pengadaan extends Model
 
     public function pengadaan()
     {
-        return $this->belongsTo(Pengadaan::class, 'pembelian_id');
+        return $this->belongsTo(Pengadaan::class, 'pengadaan_id');
     }
 
     public function barang()

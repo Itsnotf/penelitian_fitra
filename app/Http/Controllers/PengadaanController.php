@@ -115,7 +115,7 @@ class PengadaanController extends Controller implements HasMiddleware
             ->when($request->search, function ($q, $s) {
                 $q->whereHas('barang', fn($b) => $b->where('nama_barang', 'like', "%{$s}%"));
             })
-            ->where('pembelian_id', $pengadaan_id)
+            ->where('pengadaan_id', $pengadaan_id)
             ->paginate(8)
             ->withQueryString();
 

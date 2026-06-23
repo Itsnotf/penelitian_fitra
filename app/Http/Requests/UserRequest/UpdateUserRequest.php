@@ -32,7 +32,7 @@ class UpdateUserRequest extends FormRequest
                 // allow the current user to keep their email
                 Rule::unique('users')->ignore($this->route('user')),
             ],
-            "password" => "required|string|min:8|confirmed",
+            "password" => "nullable|string|min:8|confirmed",
             "role" => "required|string|exists:roles,name",
         ];
     }

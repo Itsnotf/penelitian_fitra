@@ -19,7 +19,7 @@ class UserSeeder extends Seeder
             ['email' => 'tatakelola@gmail.com'],
             ['name' => 'Tata Kelola', 'password' => bcrypt('password'), 'email_verified_at' => now()]
         );
-        $tataKelola->assignRole('Tata Kelola');
+        $tataKelola->assignRole('Tata Usaha');
 
         $kepalaBidang = User::firstOrCreate(
             ['email' => 'kepalabidang@gmail.com'],

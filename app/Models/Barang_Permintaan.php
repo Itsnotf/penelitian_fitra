@@ -11,7 +11,7 @@ class Barang_Permintaan extends Model
 
     public function permintaan()
     {
-        return $this->belongsTo(Permintaan::class, 'pengajuan_id');
+        return $this->belongsTo(Permintaan::class, 'permintaan_id');
     }
 
     public function barang()

@@ -22,12 +22,12 @@ class Pengadaan extends Model
 
     public function barang_pengadaan()
     {
-        return $this->hasMany(Barang_Pengadaan::class, 'pembelian_id');
+        return $this->hasMany(Barang_Pengadaan::class, 'pengadaan_id');
     }
 
     public function permintaan()
     {
-        return $this->belongsTo(Permintaan::class, 'pengajuan_id');
+        return $this->belongsTo(Permintaan::class, 'permintaan_id');
     }
 
     protected static function booted(): void
@@ -41,8 +41,8 @@ class Pengadaan extends Model
         static::updated(function ($pengadaan) {
             if ($pengadaan->getOriginal('status') !== 'selesai' &&
                 $pengadaan->status === 'selesai' &&
-                $pengadaan->pengajuan_id) {
-                $permintaan = Permintaan::find($pengadaan->pengajuan_id);
+                $pengadaan->permintaan_id) {
+                $permintaan = Permintaan::find($pengadaan->permintaan_id);
                 if ($permintaan) {
                     $permintaan->recheckMendesakStock();
                 }

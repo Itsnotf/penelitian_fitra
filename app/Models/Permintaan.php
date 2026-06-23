@@ -17,12 +17,12 @@ class Permintaan extends Model
 
     public function barang_permintaan()
     {
-        return $this->hasMany(Barang_Permintaan::class, 'pengajuan_id');
+        return $this->hasMany(Barang_Permintaan::class, 'permintaan_id');
     }
 
     public function pengadaan()
     {
-        return $this->hasMany(Pengadaan::class, 'pengajuan_id');
+        return $this->hasMany(Pengadaan::class, 'permintaan_id');
     }
 
     public function prosesApprove(): void
@@ -45,7 +45,7 @@ class Permintaan extends Model
     public function isStockSufficient(): bool
     {
         $barangPermintaan = DB::table('barang_permintaan')
-            ->where('pengajuan_id', $this->id)
+            ->where('permintaan_id', $this->id)
             ->get();
 
         foreach ($barangPermintaan as $bp) {
@@ -60,7 +60,7 @@ class Permintaan extends Model
     public function finalizeSelesai(): void
     {
         $barangPermintaan = DB::table('barang_permintaan')
-            ->where('pengajuan_id', $this->id)
+            ->where('permintaan_id', $this->id)
             ->get();
 
         foreach ($barangPermintaan as $bp) {
@@ -82,7 +82,7 @@ class Permintaan extends Model
     public function createDeficitPengadaan(): void
     {
         $barangPermintaan = DB::table('barang_permintaan')
-            ->where('pengajuan_id', $this->id)
+            ->where('permintaan_id', $this->id)
             ->get();
 
         $deficitItems = [];
@@ -97,11 +97,11 @@ class Permintaan extends Model
         if (empty($deficitItems)) return;
 
         $pengadaan = Pengadaan::create([
-            'user_id'      => $this->user_id,
-            'pengajuan_id' => $this->id,
-            'total_harga'  => 0,
-            'deskripsi'    => "Auto: Permintaan Mendesak #{$this->id}",
-            'status'       => 'pending',
+            'user_id'       => $this->user_id,
+            'permintaan_id' => $this->id,
+            'total_harga'   => 0,
+            'deskripsi'     => "Auto: Permintaan Mendesak #{$this->id}",
+            'status'        => 'pending',
         ]);
 
         foreach ($deficitItems as $item) {

@@ -104,7 +104,7 @@ export interface Pengadaan {
     id: number;
     user_id: number;
     vendor_id?: number | null;
-    pengajuan_id?: number | null;
+    permintaan_id?: number | null;
     total_harga: number;
     vendor?: Vendor | null;
     deskripsi: string;
@@ -117,7 +117,7 @@ export interface Pengadaan {
 
 export interface BarangPengadaan {
     id: number;
-    pembelian_id: number;
+    pengadaan_id: number;
     barang_id: number;
     harga: number;
     jumlah: number;
@@ -141,7 +141,7 @@ export interface Permintaan {
 
 export interface BarangPermintaan {
     id: number;
-    pengajuan_id: number;
+    permintaan_id: number;
     barang_id: number;
     jumlah: number;
     created_at: string;

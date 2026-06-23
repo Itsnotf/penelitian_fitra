@@ -99,7 +99,7 @@ class PermintaanController extends Controller implements HasMiddleware
             ->when($request->search, function ($q, $s) {
                 $q->whereHas('barang', fn($b) => $b->where('nama_barang', 'like', "%{$s}%"));
             })
-            ->where('pengajuan_id', $permintaan_id)
+            ->where('permintaan_id', $permintaan_id)
             ->paginate(8)
             ->withQueryString();
 
