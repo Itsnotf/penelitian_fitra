@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { update } from '@/routes/pengadaan';
 import { BreadcrumbItem, Pengadaan, Vendor } from '@/types';
 import { Form, Head, Link } from '@inertiajs/react';
 
@@ -31,7 +32,8 @@ export default function PengadaanEditPage({ pengadaan, vendors }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Ubah Pengadaan" />
-            <Form method="put" action={`/pengadaan/${pengadaan.id}`} disableWhileProcessing className="flex flex-col gap-6 p-4">
+            <Form
+            {...update.form(pengadaan.id)} disableWhileProcessing className="flex flex-col gap-6 p-4">
                 {({ processing, errors }) => (
                     <div className="grid gap-6 max-w-lg">
                         <div className="grid gap-2">

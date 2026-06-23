@@ -99,17 +99,15 @@ test('completing the deficit pengadaan re-triggers the urgent permintaan and fin
 
     $pengadaan = Pengadaan::where('permintaan_id', $permintaan->id)->first();
 
-    // Pengadaan defisit selesai -> stok masuk bertambah -> permintaan dicek ulang
+    // Pengadaan defisit selesai -> addStockMasuk (+7) dan recheckMendesakStock -> finalizeSelesai (-10)
+    // keduanya terjadi sinkron dalam satu update(), state akhir langsung 3+7-10 = 0
     $pengadaan->update(['status' => 'selesai']);
-
-    $barang->refresh();
-    expect($barang->stock_tersedia)->toBe(10); // 3 + 7 dari pengadaan
 
     $permintaan->refresh();
     expect($permintaan->status)->toBe('selesai');
 
     $barang->refresh();
-    expect($barang->stock_tersedia)->toBe(0); // 10 - 10 (jumlah permintaan)
+    expect($barang->stock_tersedia)->toBe(0); // 3 + 7 (pengadaan) - 10 (permintaan)
 });
 
 test('rejectStatus only works while permintaan is still pending', function () {

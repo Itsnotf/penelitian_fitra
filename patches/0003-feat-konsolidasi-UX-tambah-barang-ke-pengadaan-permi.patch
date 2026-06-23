@@ -1,0 +1,3257 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Kyn (via Claude)" <kyn@fitra.dev>
+Date: Tue, 23 Jun 2026 12:53:36 +0000
+Subject: feat: konsolidasi UX tambah-barang ke pengadaan/permintaan (items[]
+ multi-row, controlled form), tambah Combobox pencarian barang di semua select
+ barang, tambah test coverage domain inti (permintaan, pengadaan, tipe barang,
+ barang, seeder regression)
+
+---
+ .../Controllers/BarangPengadaanController.php |  36 +-
+ .../BarangPermintaanController.php            |  37 +-
+ .../Requests/BarangPengadaan/StoreRequest.php |  44 +-
+ .../BarangPengadaan/UpdateRequest.php         |   7 +-
+ .../BarangPermintaan/StoreRequest.php         |  40 +-
+ .../BarangPermintaan/UpdateRequest.php        |  21 +
+ app/Models/Barangs.php                        |   3 +
+ app/Models/Pengadaan.php                      |   3 +
+ app/Models/Permintaan.php                     |   3 +
+ app/Models/TipeBarang.php                     |   3 +
+ app/Models/Vendor.php                         |   3 +
+ database/factories/BarangsFactory.php         |  26 +
+ database/factories/PengadaanFactory.php       |  22 +
+ database/factories/PermintaanFactory.php      |  21 +
+ database/factories/TipeBarangFactory.php      |  17 +
+ database/factories/VendorFactory.php          |  20 +
+ package-lock.json                             | 453 +++++++++++++++++-
+ package.json                                  |   4 +-
+ resources/js/components/ui/combobox.tsx       |  81 ++++
+ resources/js/components/ui/command.tsx        | 143 ++++++
+ resources/js/components/ui/popover.tsx        |  46 ++
+ .../js/pages/pengadaan/barangs/create.tsx     | 193 +++++---
+ resources/js/pages/pengadaan/barangs/edit.tsx | 113 ++---
+ resources/js/pages/pengadaan/create.tsx       |  39 +-
+ .../js/pages/permintaan/barangs/create.tsx    | 175 +++++--
+ .../js/pages/permintaan/barangs/edit.tsx      | 106 ++--
+ resources/js/pages/permintaan/create.tsx      |  39 +-
+ resources/js/pages/vendors/barangs/create.tsx |  96 ++--
+ tests/Feature/BarangPengadaanTest.php         | 115 +++++
+ tests/Feature/BarangPermintaanTest.php        | 109 +++++
+ tests/Feature/BarangsTest.php                 | 143 ++++++
+ tests/Feature/PengadaanBusinessLogicTest.php  | 112 +++++
+ tests/Feature/PermintaanBusinessLogicTest.php | 199 ++++++++
+ tests/Feature/SeederTest.php                  |  30 ++
+ tests/Feature/TipeBarangTest.php              | 100 ++++
+ tests/Feature/UserTest.php                    |  38 ++
+ 36 files changed, 2290 insertions(+), 350 deletions(-)
+ create mode 100644 app/Http/Requests/BarangPermintaan/UpdateRequest.php
+ create mode 100644 database/factories/BarangsFactory.php
+ create mode 100644 database/factories/PengadaanFactory.php
+ create mode 100644 database/factories/PermintaanFactory.php
+ create mode 100644 database/factories/TipeBarangFactory.php
+ create mode 100644 database/factories/VendorFactory.php
+ create mode 100644 resources/js/components/ui/combobox.tsx
+ create mode 100644 resources/js/components/ui/command.tsx
+ create mode 100644 resources/js/components/ui/popover.tsx
+ create mode 100644 tests/Feature/BarangPengadaanTest.php
+ create mode 100644 tests/Feature/BarangPermintaanTest.php
+ create mode 100644 tests/Feature/BarangsTest.php
+ create mode 100644 tests/Feature/PengadaanBusinessLogicTest.php
+ create mode 100644 tests/Feature/PermintaanBusinessLogicTest.php
+ create mode 100644 tests/Feature/SeederTest.php
+ create mode 100644 tests/Feature/TipeBarangTest.php
+
+diff --git a/app/Http/Controllers/BarangPengadaanController.php b/app/Http/Controllers/BarangPengadaanController.php
+index c4b6e9c..96acdb5 100644
+--- a/app/Http/Controllers/BarangPengadaanController.php
++++ b/app/Http/Controllers/BarangPengadaanController.php
+@@ -6,9 +6,9 @@
+ use App\Http\Requests\BarangPengadaan\UpdateRequest;
+ use App\Models\Barang_Pengadaan;
+ use App\Models\Barangs;
+-use App\Models\Pengadaan;
+ use Illuminate\Routing\Controllers\HasMiddleware;
+ use Illuminate\Routing\Controllers\Middleware;
++use Illuminate\Support\Facades\DB;
+ use Inertia\Inertia;
+ 
+ class BarangPengadaanController extends Controller implements HasMiddleware
+@@ -24,7 +24,13 @@ public static function middleware()
+ 
+     public function create(string $pengadaan_id)
+     {
+-        $barangs = Barangs::all();
++        $existingBarangIds = Barang_Pengadaan::where('pengadaan_id', $pengadaan_id)->pluck('barang_id');
++
++        $barangs = Barangs::with('tipeBarang:id,nama_tipe')
++            ->whereNotIn('id', $existingBarangIds)
++            ->orderBy('nama_barang')
++            ->get(['id', 'nama_barang', 'satuan', 'tipe_barang_id']);
++
+         return Inertia::render('pengadaan/barangs/create', [
+             'pengadaan_id' => $pengadaan_id,
+             'barangs'      => $barangs,
+@@ -33,10 +39,16 @@ public function create(string $pengadaan_id)
+ 
+     public function store(string $pengadaan_id, StoreRequest $request)
+     {
+-        $validated = $request->validated();
+-        $validated['pembelian_id'] = $pengadaan_id;
+-
+-        Barang_Pengadaan::create($validated);
++        DB::transaction(function () use ($pengadaan_id, $request) {
++            foreach ($request->validated('items') as $item) {
++                Barang_Pengadaan::create([
++                    'pengadaan_id' => $pengadaan_id,
++                    'barang_id'    => $item['barang_id'],
++                    'jumlah'       => $item['jumlah'],
++                    'harga'        => $item['harga'],
++                ]);
++            }
++        });
+ 
+         return redirect()->route('pengadaan.show', $pengadaan_id)->with('success', 'Barang pengadaan berhasil ditambahkan.');
+     }
+@@ -44,11 +56,15 @@ public function store(string $pengadaan_id, StoreRequest $request)
+     public function edit(string $pengadaan_id, string $barang_Pengadaan_id)
+     {
+         $barang_Pengadaan = Barang_Pengadaan::findOrFail($barang_Pengadaan_id);
+-        $barangs = Barangs::all();
++
++        $barangs = Barangs::with('tipeBarang:id,nama_tipe')
++            ->orderBy('nama_barang')
++            ->get(['id', 'nama_barang', 'satuan', 'tipe_barang_id']);
++
+         return Inertia::render('pengadaan/barangs/edit', [
+-            'pengadaan_id'    => $pengadaan_id,
+-            'barang_pengadaan' => $barang_Pengadaan,
+-            'barangs'         => $barangs,
++            'pengadaan_id'      => $pengadaan_id,
++            'barang_pengadaan'  => $barang_Pengadaan,
++            'barangs'           => $barangs,
+         ]);
+     }
+ 
+diff --git a/app/Http/Controllers/BarangPermintaanController.php b/app/Http/Controllers/BarangPermintaanController.php
+index ab905b6..df1ffca 100644
+--- a/app/Http/Controllers/BarangPermintaanController.php
++++ b/app/Http/Controllers/BarangPermintaanController.php
+@@ -3,10 +3,12 @@
+ namespace App\Http\Controllers;
+ 
+ use App\Http\Requests\BarangPermintaan\StoreRequest;
++use App\Http\Requests\BarangPermintaan\UpdateRequest;
+ use App\Models\Barang_Permintaan;
+ use App\Models\Barangs;
+ use Illuminate\Routing\Controllers\HasMiddleware;
+ use Illuminate\Routing\Controllers\Middleware;
++use Illuminate\Support\Facades\DB;
+ use Inertia\Inertia;
+ 
+ class BarangPermintaanController extends Controller implements HasMiddleware
+@@ -22,7 +24,13 @@ public static function middleware()
+ 
+     public function create(string $permintaan_id)
+     {
+-        $barangs = Barangs::all();
++        $existingBarangIds = Barang_Permintaan::where('permintaan_id', $permintaan_id)->pluck('barang_id');
++
++        $barangs = Barangs::with('tipeBarang:id,nama_tipe')
++            ->whereNotIn('id', $existingBarangIds)
++            ->orderBy('nama_barang')
++            ->get(['id', 'nama_barang', 'satuan', 'tipe_barang_id']);
++
+         return Inertia::render('permintaan/barangs/create', [
+             'permintaan_id' => $permintaan_id,
+             'barangs'       => $barangs,
+@@ -31,10 +39,15 @@ public function create(string $permintaan_id)
+ 
+     public function store(string $permintaan_id, StoreRequest $request)
+     {
+-        $validated = $request->validated();
+-        $validated['pengajuan_id'] = $permintaan_id;
+-
+-        Barang_Permintaan::create($validated);
++        DB::transaction(function () use ($permintaan_id, $request) {
++            foreach ($request->validated('items') as $item) {
++                Barang_Permintaan::create([
++                    'permintaan_id' => $permintaan_id,
++                    'barang_id'     => $item['barang_id'],
++                    'jumlah'        => $item['jumlah'],
++                ]);
++            }
++        });
+ 
+         return redirect()->route('permintaan.show', $permintaan_id)->with('success', 'Barang permintaan berhasil ditambahkan.');
+     }
+@@ -42,15 +55,19 @@ public function store(string $permintaan_id, StoreRequest $request)
+     public function edit(string $permintaan_id, string $barang_Permintaan_id)
+     {
+         $barang_Permintaan = Barang_Permintaan::findOrFail($barang_Permintaan_id);
+-        $barangs = Barangs::all();
++
++        $barangs = Barangs::with('tipeBarang:id,nama_tipe')
++            ->orderBy('nama_barang')
++            ->get(['id', 'nama_barang', 'satuan', 'tipe_barang_id']);
++
+         return Inertia::render('permintaan/barangs/edit', [
+-            'permintaan_id'    => $permintaan_id,
+-            'barang_permintaan' => $barang_Permintaan,
+-            'barangs'          => $barangs,
++            'permintaan_id'      => $permintaan_id,
++            'barang_permintaan'  => $barang_Permintaan,
++            'barangs'            => $barangs,
+         ]);
+     }
+ 
+-    public function update(string $permintaan_id, string $barang_Permintaan_id, StoreRequest $request)
++    public function update(string $permintaan_id, string $barang_Permintaan_id, UpdateRequest $request)
+     {
+         $barang_Permintaan = Barang_Permintaan::findOrFail($barang_Permintaan_id);
+         $barang_Permintaan->update($request->validated());
+diff --git a/app/Http/Requests/BarangPengadaan/StoreRequest.php b/app/Http/Requests/BarangPengadaan/StoreRequest.php
+index ca08232..bead6a4 100644
+--- a/app/Http/Requests/BarangPengadaan/StoreRequest.php
++++ b/app/Http/Requests/BarangPengadaan/StoreRequest.php
+@@ -2,6 +2,7 @@
+ 
+ namespace App\Http\Requests\BarangPengadaan;
+ 
++use App\Models\Barang_Pengadaan;
+ use Illuminate\Foundation\Http\FormRequest;
+ 
+ class StoreRequest extends FormRequest
+@@ -14,10 +15,45 @@ public function authorize(): bool
+     public function rules(): array
+     {
+         return [
+-            'pembelian_id' => 'required|exists:pengadaan,id',
+-            'barang_id'    => 'required|exists:barangs,id',
+-            'harga'        => 'required|string|max:255',
+-            'jumlah'       => 'required|string|max:255',
++            'items'             => 'required|array|min:1',
++            'items.*.barang_id' => 'required|exists:barangs,id',
++            'items.*.jumlah'    => 'required|integer|min:1',
++            'items.*.harga'     => 'required|integer|min:0',
+         ];
+     }
++
++    public function messages(): array
++    {
++        return [
++            'items.required'             => 'Minimal tambahkan 1 barang.',
++            'items.min'                  => 'Minimal tambahkan 1 barang.',
++            'items.*.barang_id.required' => 'Pilih barang.',
++            'items.*.jumlah.required'    => 'Jumlah wajib diisi.',
++            'items.*.jumlah.min'         => 'Jumlah minimal 1.',
++            'items.*.harga.required'     => 'Harga wajib diisi.',
++            'items.*.harga.min'          => 'Harga tidak boleh negatif.',
++        ];
++    }
++
++    public function withValidator($validator): void
++    {
++        $validator->after(function ($validator) {
++            $items = $this->input('items', []);
++            $barangIds = array_column($items, 'barang_id');
++
++            if (count($barangIds) !== count(array_unique($barangIds))) {
++                $validator->errors()->add('items', 'Tidak boleh memilih barang yang sama lebih dari sekali.');
++                return;
++            }
++
++            $pengadaanId = $this->route('pengadaan_id');
++            $existing = Barang_Pengadaan::where('pengadaan_id', $pengadaanId)
++                ->whereIn('barang_id', $barangIds)
++                ->exists();
++
++            if ($existing) {
++                $validator->errors()->add('items', 'Sebagian barang yang dipilih sudah ada di pengadaan ini. Ubah baris yang sudah ada, bukan menambah baris baru.');
++            }
++        });
++    }
+ }
+diff --git a/app/Http/Requests/BarangPengadaan/UpdateRequest.php b/app/Http/Requests/BarangPengadaan/UpdateRequest.php
+index 0f12dae..34fb500 100644
+--- a/app/Http/Requests/BarangPengadaan/UpdateRequest.php
++++ b/app/Http/Requests/BarangPengadaan/UpdateRequest.php
+@@ -14,10 +14,9 @@ public function authorize(): bool
+     public function rules(): array
+     {
+         return [
+-            'pembelian_id' => 'required|exists:pengadaan,id',
+-            'barang_id'    => 'required|exists:barangs,id',
+-            'harga'        => 'required|string|max:255',
+-            'jumlah'       => 'required|string|max:255',
++            'barang_id' => 'required|exists:barangs,id',
++            'harga'     => 'required|integer|min:0',
++            'jumlah'    => 'required|integer|min:1',
+         ];
+     }
+ }
+diff --git a/app/Http/Requests/BarangPermintaan/StoreRequest.php b/app/Http/Requests/BarangPermintaan/StoreRequest.php
+index 73964f4..31b7b73 100644
+--- a/app/Http/Requests/BarangPermintaan/StoreRequest.php
++++ b/app/Http/Requests/BarangPermintaan/StoreRequest.php
+@@ -2,6 +2,7 @@
+ 
+ namespace App\Http\Requests\BarangPermintaan;
+ 
++use App\Models\Barang_Permintaan;
+ use Illuminate\Foundation\Http\FormRequest;
+ 
+ class StoreRequest extends FormRequest
+@@ -14,9 +15,42 @@ public function authorize(): bool
+     public function rules(): array
+     {
+         return [
+-            'pengajuan_id' => 'required|exists:permintaan,id',
+-            'barang_id'    => 'required|exists:barangs,id',
+-            'jumlah'       => 'required|integer|min:1',
++            'items'             => 'required|array|min:1',
++            'items.*.barang_id' => 'required|exists:barangs,id',
++            'items.*.jumlah'    => 'required|integer|min:1',
+         ];
+     }
++
++    public function messages(): array
++    {
++        return [
++            'items.required'             => 'Minimal tambahkan 1 barang.',
++            'items.min'                  => 'Minimal tambahkan 1 barang.',
++            'items.*.barang_id.required' => 'Pilih barang.',
++            'items.*.jumlah.required'    => 'Jumlah wajib diisi.',
++            'items.*.jumlah.min'         => 'Jumlah minimal 1.',
++        ];
++    }
++
++    public function withValidator($validator): void
++    {
++        $validator->after(function ($validator) {
++            $items = $this->input('items', []);
++            $barangIds = array_column($items, 'barang_id');
++
++            if (count($barangIds) !== count(array_unique($barangIds))) {
++                $validator->errors()->add('items', 'Tidak boleh memilih barang yang sama lebih dari sekali.');
++                return;
++            }
++
++            $permintaanId = $this->route('permintaan_id');
++            $existing = Barang_Permintaan::where('permintaan_id', $permintaanId)
++                ->whereIn('barang_id', $barangIds)
++                ->exists();
++
++            if ($existing) {
++                $validator->errors()->add('items', 'Sebagian barang yang dipilih sudah ada di permintaan ini. Ubah baris yang sudah ada, bukan menambah baris baru.');
++            }
++        });
++    }
+ }
+diff --git a/app/Http/Requests/BarangPermintaan/UpdateRequest.php b/app/Http/Requests/BarangPermintaan/UpdateRequest.php
+new file mode 100644
+index 0000000..22a94b1
+--- /dev/null
++++ b/app/Http/Requests/BarangPermintaan/UpdateRequest.php
+@@ -0,0 +1,21 @@
++<?php
++
++namespace App\Http\Requests\BarangPermintaan;
++
++use Illuminate\Foundation\Http\FormRequest;
++
++class UpdateRequest extends FormRequest
++{
++    public function authorize(): bool
++    {
++        return true;
++    }
++
++    public function rules(): array
++    {
++        return [
++            'barang_id' => 'required|exists:barangs,id',
++            'jumlah'    => 'required|integer|min:1',
++        ];
++    }
++}
+diff --git a/app/Models/Barangs.php b/app/Models/Barangs.php
+index c11e485..c208ff9 100644
+--- a/app/Models/Barangs.php
++++ b/app/Models/Barangs.php
+@@ -2,10 +2,13 @@
+ 
+ namespace App\Models;
+ 
++use Illuminate\Database\Eloquent\Factories\HasFactory;
+ use Illuminate\Database\Eloquent\Model;
+ 
+ class Barangs extends Model
+ {
++    use HasFactory;
++
+     protected $guarded = ['id'];
+ 
+     public function tipeBarang()
+diff --git a/app/Models/Pengadaan.php b/app/Models/Pengadaan.php
+index 00345cb..43f63f1 100644
+--- a/app/Models/Pengadaan.php
++++ b/app/Models/Pengadaan.php
+@@ -2,11 +2,14 @@
+ 
+ namespace App\Models;
+ 
++use Illuminate\Database\Eloquent\Factories\HasFactory;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Support\Facades\DB;
+ 
+ class Pengadaan extends Model
+ {
++    use HasFactory;
++
+     protected $table = 'pengadaan';
+     protected $guarded = ['id'];
+ 
+diff --git a/app/Models/Permintaan.php b/app/Models/Permintaan.php
+index 23f1bf0..5f02e14 100644
+--- a/app/Models/Permintaan.php
++++ b/app/Models/Permintaan.php
+@@ -2,11 +2,14 @@
+ 
+ namespace App\Models;
+ 
++use Illuminate\Database\Eloquent\Factories\HasFactory;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Support\Facades\DB;
+ 
+ class Permintaan extends Model
+ {
++    use HasFactory;
++
+     protected $table = 'permintaan';
+     protected $guarded = ['id'];
+ 
+diff --git a/app/Models/TipeBarang.php b/app/Models/TipeBarang.php
+index 8d5e04e..ae7485a 100644
+--- a/app/Models/TipeBarang.php
++++ b/app/Models/TipeBarang.php
+@@ -2,10 +2,13 @@
+ 
+ namespace App\Models;
+ 
++use Illuminate\Database\Eloquent\Factories\HasFactory;
+ use Illuminate\Database\Eloquent\Model;
+ 
+ class TipeBarang extends Model
+ {
++    use HasFactory;
++
+     protected $table = 'tipe_barangs';
+     protected $guarded = ['id'];
+ 
+diff --git a/app/Models/Vendor.php b/app/Models/Vendor.php
+index cc6f1d5..f4dfc8e 100644
+--- a/app/Models/Vendor.php
++++ b/app/Models/Vendor.php
+@@ -2,10 +2,13 @@
+ 
+ namespace App\Models;
+ 
++use Illuminate\Database\Eloquent\Factories\HasFactory;
+ use Illuminate\Database\Eloquent\Model;
+ 
+ class Vendor extends Model
+ {
++    use HasFactory;
++
+     protected $guarded = ['id'];
+ 
+     public function barangVendors()
+diff --git a/database/factories/BarangsFactory.php b/database/factories/BarangsFactory.php
+new file mode 100644
+index 0000000..3a69649
+--- /dev/null
++++ b/database/factories/BarangsFactory.php
+@@ -0,0 +1,26 @@
++<?php
++
++namespace Database\Factories;
++
++use App\Models\TipeBarang;
++use Illuminate\Database\Eloquent\Factories\Factory;
++
++class BarangsFactory extends Factory
++{
++    protected $model = \App\Models\Barangs::class;
++
++    public function definition(): array
++    {
++        return [
++            'nama_barang'       => fake()->unique()->words(2, true),
++            'tipe_barang_id'    => TipeBarang::factory(),
++            'jenis_barang'      => fake()->randomElement(['pendek', 'sedang', 'panjang']),
++            'satuan'            => fake()->randomElement(['Pcs', 'Rim', 'Box', 'Unit']),
++            'stock_awal'        => 100,
++            'stock_masuk'       => 0,
++            'stock_keluar'      => 0,
++            'stock_tersedia'    => 100,
++            'jumlah_permintaan' => 0,
++        ];
++    }
++}
+diff --git a/database/factories/PengadaanFactory.php b/database/factories/PengadaanFactory.php
+new file mode 100644
+index 0000000..6e5aad8
+--- /dev/null
++++ b/database/factories/PengadaanFactory.php
+@@ -0,0 +1,22 @@
++<?php
++
++namespace Database\Factories;
++
++use App\Models\User;
++use Illuminate\Database\Eloquent\Factories\Factory;
++
++class PengadaanFactory extends Factory
++{
++    protected $model = \App\Models\Pengadaan::class;
++
++    public function definition(): array
++    {
++        return [
++            'user_id'     => User::factory(),
++            'vendor_id'   => null,
++            'total_harga' => 0,
++            'deskripsi'   => fake()->sentence(),
++            'status'      => 'pending',
++        ];
++    }
++}
+diff --git a/database/factories/PermintaanFactory.php b/database/factories/PermintaanFactory.php
+new file mode 100644
+index 0000000..5d4064c
+--- /dev/null
++++ b/database/factories/PermintaanFactory.php
+@@ -0,0 +1,21 @@
++<?php
++
++namespace Database\Factories;
++
++use App\Models\User;
++use Illuminate\Database\Eloquent\Factories\Factory;
++
++class PermintaanFactory extends Factory
++{
++    protected $model = \App\Models\Permintaan::class;
++
++    public function definition(): array
++    {
++        return [
++            'user_id'   => User::factory(),
++            'deskripsi' => fake()->sentence(),
++            'urgensi'   => 'normal',
++            'status'    => 'pending',
++        ];
++    }
++}
+diff --git a/database/factories/TipeBarangFactory.php b/database/factories/TipeBarangFactory.php
+new file mode 100644
+index 0000000..1ce4bed
+--- /dev/null
++++ b/database/factories/TipeBarangFactory.php
+@@ -0,0 +1,17 @@
++<?php
++
++namespace Database\Factories;
++
++use Illuminate\Database\Eloquent\Factories\Factory;
++
++class TipeBarangFactory extends Factory
++{
++    protected $model = \App\Models\TipeBarang::class;
++
++    public function definition(): array
++    {
++        return [
++            'nama_tipe' => fake()->unique()->word(),
++        ];
++    }
++}
+diff --git a/database/factories/VendorFactory.php b/database/factories/VendorFactory.php
+new file mode 100644
+index 0000000..d378aa6
+--- /dev/null
++++ b/database/factories/VendorFactory.php
+@@ -0,0 +1,20 @@
++<?php
++
++namespace Database\Factories;
++
++use Illuminate\Database\Eloquent\Factories\Factory;
++
++class VendorFactory extends Factory
++{
++    protected $model = \App\Models\Vendor::class;
++
++    public function definition(): array
++    {
++        return [
++            'nama_vendor' => fake()->unique()->company(),
++            'alamat'      => fake()->address(),
++            'telepon'     => fake()->phoneNumber(),
++            'email'       => fake()->unique()->companyEmail(),
++        ];
++    }
++}
+diff --git a/package-lock.json b/package-lock.json
+index 118c785..29d2719 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -15,6 +15,7 @@
+                 "@radix-ui/react-dropdown-menu": "^2.1.6",
+                 "@radix-ui/react-label": "^2.1.2",
+                 "@radix-ui/react-navigation-menu": "^1.2.5",
++                "@radix-ui/react-popover": "^1.1.17",
+                 "@radix-ui/react-select": "^2.1.6",
+                 "@radix-ui/react-separator": "^1.1.2",
+                 "@radix-ui/react-slot": "^1.2.3",
+@@ -27,6 +28,7 @@
+                 "@vitejs/plugin-react": "^5.0.0",
+                 "class-variance-authority": "^0.7.1",
+                 "clsx": "^2.1.1",
++                "cmdk": "^1.1.1",
+                 "concurrently": "^9.0.1",
+                 "globals": "^15.14.0",
+                 "input-otp": "^1.4.2",
+@@ -1578,6 +1580,434 @@
+                 }
+             }
+         },
++        "node_modules/@radix-ui/react-popover": {
++            "version": "1.1.17",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-popover/-/react-popover-1.1.17.tgz",
++            "integrity": "sha512-/YSAOdJ7YJvdn7bn5sdSx2egW+SKY+u7O5RyAVs94Ymrg2fg5QTSFPMRkzvhGyFuE4/qsmPBdrwYoZMZh/4f+g==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/primitive": "1.1.4",
++                "@radix-ui/react-compose-refs": "1.1.3",
++                "@radix-ui/react-context": "1.1.4",
++                "@radix-ui/react-dismissable-layer": "1.1.13",
++                "@radix-ui/react-focus-guards": "1.1.4",
++                "@radix-ui/react-focus-scope": "1.1.10",
++                "@radix-ui/react-id": "1.1.2",
++                "@radix-ui/react-popper": "1.3.1",
++                "@radix-ui/react-portal": "1.1.12",
++                "@radix-ui/react-presence": "1.1.6",
++                "@radix-ui/react-primitive": "2.1.6",
++                "@radix-ui/react-slot": "1.3.0",
++                "@radix-ui/react-use-controllable-state": "1.2.3",
++                "aria-hidden": "^1.2.4",
++                "react-remove-scroll": "^2.7.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "@types/react-dom": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++                "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                },
++                "@types/react-dom": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/primitive": {
++            "version": "1.1.4",
++            "resolved": "https://registry.npmjs.org/@radix-ui/primitive/-/primitive-1.1.4.tgz",
++            "integrity": "sha512-7AdCK9PQyiljKoBDbN8OuctCbd/esdwZPQ8RtOE3SsyQtUpiPb+ND75q0jEhC1m1ecBI0MFNeLJvwIh9iKHRcQ==",
++            "license": "MIT"
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-arrow": {
++            "version": "1.1.10",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-arrow/-/react-arrow-1.1.10.tgz",
++            "integrity": "sha512-j2VTDz1vgCsmuG0k5lBfOcM8n5JPFqZBcMryasFjHYMhwxYL5SRUV5lMSUpRdNtw3D/Sv8pzJtrlAgkssYSsQQ==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-primitive": "2.1.6"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "@types/react-dom": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++                "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                },
++                "@types/react-dom": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-compose-refs": {
++            "version": "1.1.3",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-compose-refs/-/react-compose-refs-1.1.3.tgz",
++            "integrity": "sha512-rYOP8OMnuuPMQF1uhPVlGNcCDlkokKqGFE3JcxFViIkAXP7EvFWUliJAstrapypaBLJNHbZL6jGhbVDGTwmVhA==",
++            "license": "MIT",
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-context": {
++            "version": "1.1.4",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-context/-/react-context-1.1.4.tgz",
++            "integrity": "sha512-QwH4PO5urrbO+FaGd5Aglg+YJgWTyyuZ3g/6mKvsqraLkglDdckw9JafgL5McL5VEJ6EPNduPaT3ZE9BttDAqg==",
++            "license": "MIT",
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-dismissable-layer": {
++            "version": "1.1.13",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-dismissable-layer/-/react-dismissable-layer-1.1.13.tgz",
++            "integrity": "sha512-2v+zNAWWe0ySxgC0D0yeXMPQ23xZVgXZTerTz+JKlmdRj6gfTqmCcR29jb6d290DezXPGgruHWDX/vYUebtErg==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/primitive": "1.1.4",
++                "@radix-ui/react-compose-refs": "1.1.3",
++                "@radix-ui/react-primitive": "2.1.6",
++                "@radix-ui/react-use-callback-ref": "1.1.2",
++                "@radix-ui/react-use-escape-keydown": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "@types/react-dom": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++                "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                },
++                "@types/react-dom": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-focus-guards": {
++            "version": "1.1.4",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-focus-guards/-/react-focus-guards-1.1.4.tgz",
++            "integrity": "sha512-cot/aB/mOm0IYVYTTmQcEEK1M48lZWi8FlYe5nDPQQ8NYZUlXEFgncJ9p2Kzer3RKSrY7cTTpEMLZKNo9QoP5Q==",
++            "license": "MIT",
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-focus-scope": {
++            "version": "1.1.10",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-focus-scope/-/react-focus-scope-1.1.10.tgz",
++            "integrity": "sha512-Fas/lXQqhVvqwAb64s5RFeHiHYElZ6SUQbZaNd6EkfhP/Al7wTIQ9WIR4QVX475tlu5yFCEdDcJH6/UwsZjMWw==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-compose-refs": "1.1.3",
++                "@radix-ui/react-primitive": "2.1.6",
++                "@radix-ui/react-use-callback-ref": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "@types/react-dom": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++                "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                },
++                "@types/react-dom": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-id": {
++            "version": "1.1.2",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-id/-/react-id-1.1.2.tgz",
++            "integrity": "sha512-orBC88futVpqCmhX1p4cvquNHsELQ+w+vBJnuj3ftETI5bJb0bZn3Tqu3SWN2IOcPycTnMGnhwoermvISt72sA==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-use-layout-effect": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-popper": {
++            "version": "1.3.1",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-popper/-/react-popper-1.3.1.tgz",
++            "integrity": "sha512-bhnq/0DEPTi2lsOD3J5rTL65qUKHbKbhqHsmN9TMiclSXpipi651ooUKPPp6G5lF/WiHBdn1s0Wuqsn+myVAvw==",
++            "license": "MIT",
++            "dependencies": {
++                "@floating-ui/react-dom": "^2.0.0",
++                "@radix-ui/react-arrow": "1.1.10",
++                "@radix-ui/react-compose-refs": "1.1.3",
++                "@radix-ui/react-context": "1.1.4",
++                "@radix-ui/react-primitive": "2.1.6",
++                "@radix-ui/react-use-callback-ref": "1.1.2",
++                "@radix-ui/react-use-layout-effect": "1.1.2",
++                "@radix-ui/react-use-rect": "1.1.2",
++                "@radix-ui/react-use-size": "1.1.2",
++                "@radix-ui/rect": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "@types/react-dom": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++                "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                },
++                "@types/react-dom": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-portal": {
++            "version": "1.1.12",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-portal/-/react-portal-1.1.12.tgz",
++            "integrity": "sha512-m309havGzsjLHHaIX50G5PlvRs3xkgPCsGk/5PTvYm8D5q33yG0J7w/712PTOhid7NTaFETtnSXjngHQavvhVw==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-primitive": "2.1.6",
++                "@radix-ui/react-use-layout-effect": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "@types/react-dom": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++                "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                },
++                "@types/react-dom": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-presence": {
++            "version": "1.1.6",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-presence/-/react-presence-1.1.6.tgz",
++            "integrity": "sha512-zdTk4PlUO0E18HnZ3wYbW0KkJJxWCdiNYp6g6X1PtONFhxVkg01vliTJAmwIszU6mHiyBOoW9P0rAugl5/hULQ==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-use-layout-effect": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "@types/react-dom": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++                "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                },
++                "@types/react-dom": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-primitive": {
++            "version": "2.1.6",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-primitive/-/react-primitive-2.1.6.tgz",
++            "integrity": "sha512-wetd0QI77DbvrPpTAvH1SqOxsYF2wZe5TNxqwOd5Ty4XDpV3dpV0s8K/1MGMJBeY5o7lg8ub5VIt1Ub+yVen6g==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-slot": "1.3.0"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "@types/react-dom": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++                "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                },
++                "@types/react-dom": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-slot": {
++            "version": "1.3.0",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-slot/-/react-slot-1.3.0.tgz",
++            "integrity": "sha512-MojKku4U/miO8Av4Dkb+ctMAQx7JmY96LmtDQlAarCRtd7rN52QCSzBF+XAvr5S6coSVj9HEPBgHAHKEJVk/WA==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-compose-refs": "1.1.3"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-use-callback-ref": {
++            "version": "1.1.2",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-use-callback-ref/-/react-use-callback-ref-1.1.2.tgz",
++            "integrity": "sha512-xCso9j1/u8sEgP1RNHjFrXJLApL8LiqOkI1R4ywuN00rxWdYg4oQXuwKLS3i0j5NWLromUD27/4nlxj2UFVvIw==",
++            "license": "MIT",
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-use-controllable-state": {
++            "version": "1.2.3",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-use-controllable-state/-/react-use-controllable-state-1.2.3.tgz",
++            "integrity": "sha512-PLzC90MS+ReootmjC597dvopoelpZ8Q61HJkDXZSExitIq7PL55vHNnesAHwguHK0aPfBnpdNzQtv1uliaqQrA==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-use-effect-event": "0.0.3",
++                "@radix-ui/react-use-layout-effect": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-use-effect-event": {
++            "version": "0.0.3",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-use-effect-event/-/react-use-effect-event-0.0.3.tgz",
++            "integrity": "sha512-6c8ZqvPTWILEKnyVkP53EGRCcpnJiKTC21sS/6R1GF5xKyHJJWQEPfkqlcgUkdRQivd6tb23abUwe4ngWmY0JA==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-use-layout-effect": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-use-escape-keydown": {
++            "version": "1.1.2",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-use-escape-keydown/-/react-use-escape-keydown-1.1.2.tgz",
++            "integrity": "sha512-2uVLvLjgO7NZCWw01/FdqRwmA42J0BcjPMUCA+koFEOAb+zjqIP7SiFz/7zWPrKnVmSqr76Omq2ALyCuX4dhLw==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-use-callback-ref": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-use-layout-effect": {
++            "version": "1.1.2",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-use-layout-effect/-/react-use-layout-effect-1.1.2.tgz",
++            "integrity": "sha512-jrBWOxZITuGcnjRCM2t2U5ZPkCLxD+Ym6DjfssS5haTj2iiak/DOb64JeN6OdLfLgptb6/e2kKR+ZuTrGoZTPA==",
++            "license": "MIT",
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-use-rect": {
++            "version": "1.1.2",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-use-rect/-/react-use-rect-1.1.2.tgz",
++            "integrity": "sha512-d8a+bBY/FxikNPlgJJoaBHZX+zKVbWHYJGTLnLvveQgFSTntkGdEKv3JDtHrMS0DNYpllz2nRsTLGLKYttbpmw==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/rect": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/react-use-size": {
++            "version": "1.1.2",
++            "resolved": "https://registry.npmjs.org/@radix-ui/react-use-size/-/react-use-size-1.1.2.tgz",
++            "integrity": "sha512-giWQp+4mxjBPt4KZ0MmyuykFNWfbDxKt4x+fPkRYmgRFJSbCZFzUglvMb/Kjn38tm10YP4ufiQZDx3zna4LU6w==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-use-layout-effect": "1.1.2"
++            },
++            "peerDependencies": {
++                "@types/react": "*",
++                "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++            },
++            "peerDependenciesMeta": {
++                "@types/react": {
++                    "optional": true
++                }
++            }
++        },
++        "node_modules/@radix-ui/react-popover/node_modules/@radix-ui/rect": {
++            "version": "1.1.2",
++            "resolved": "https://registry.npmjs.org/@radix-ui/rect/-/rect-1.1.2.tgz",
++            "integrity": "sha512-xnXE7wG13PI+cxieVssYXlQJuYVRhH9NBoxt3KNwzghDIA69GMm7d4wXRouHIYjE+KvS6U/MsMO73NdS2MH9ZA==",
++            "license": "MIT"
++        },
+         "node_modules/@radix-ui/react-popper": {
+             "version": "1.2.8",
+             "resolved": "https://registry.npmjs.org/@radix-ui/react-popper/-/react-popper-1.2.8.tgz",
+@@ -3701,6 +4131,22 @@
+                 "node": ">=6"
+             }
+         },
++        "node_modules/cmdk": {
++            "version": "1.1.1",
++            "resolved": "https://registry.npmjs.org/cmdk/-/cmdk-1.1.1.tgz",
++            "integrity": "sha512-Vsv7kFaXm+ptHDMZ7izaRsP70GgrW9NBNGswt9OZaVBLlE0SNpDq8eu/VGXyF9r7M0azK3Wy7OlYXsuyYLFzHg==",
++            "license": "MIT",
++            "dependencies": {
++                "@radix-ui/react-compose-refs": "^1.1.1",
++                "@radix-ui/react-dialog": "^1.1.6",
++                "@radix-ui/react-id": "^1.1.0",
++                "@radix-ui/react-primitive": "^2.0.2"
++            },
++            "peerDependencies": {
++                "react": "^18 || ^19 || ^19.0.0-rc",
++                "react-dom": "^18 || ^19 || ^19.0.0-rc"
++            }
++        },
+         "node_modules/color-convert": {
+             "version": "2.0.1",
+             "resolved": "https://registry.npmjs.org/color-convert/-/color-convert-2.0.1.tgz",
+@@ -6497,9 +6943,10 @@
+             }
+         },
+         "node_modules/react-remove-scroll": {
+-            "version": "2.7.1",
+-            "resolved": "https://registry.npmjs.org/react-remove-scroll/-/react-remove-scroll-2.7.1.tgz",
+-            "integrity": "sha512-HpMh8+oahmIdOuS5aFKKY6Pyog+FNaZV/XyJOq7b4YFwsFHe5yYfdbIalI4k3vU2nSDql7YskmUseHsRrJqIPA==",
++            "version": "2.7.2",
++            "resolved": "https://registry.npmjs.org/react-remove-scroll/-/react-remove-scroll-2.7.2.tgz",
++            "integrity": "sha512-Iqb9NjCCTt6Hf+vOdNIZGdTiH1QSqr27H/Ek9sv/a97gfueI/5h1s3yRi1nngzMUaOOToin5dI1dXKdXiF+u0Q==",
++            "license": "MIT",
+             "dependencies": {
+                 "react-remove-scroll-bar": "^2.3.7",
+                 "react-style-singleton": "^2.2.3",
+diff --git a/package.json b/package.json
+index 5a0d6c7..bcee6db 100644
+--- a/package.json
++++ b/package.json
+@@ -36,6 +36,7 @@
+         "@radix-ui/react-dropdown-menu": "^2.1.6",
+         "@radix-ui/react-label": "^2.1.2",
+         "@radix-ui/react-navigation-menu": "^1.2.5",
++        "@radix-ui/react-popover": "^1.1.17",
+         "@radix-ui/react-select": "^2.1.6",
+         "@radix-ui/react-separator": "^1.1.2",
+         "@radix-ui/react-slot": "^1.2.3",
+@@ -48,6 +49,7 @@
+         "@vitejs/plugin-react": "^5.0.0",
+         "class-variance-authority": "^0.7.1",
+         "clsx": "^2.1.1",
++        "cmdk": "^1.1.1",
+         "concurrently": "^9.0.1",
+         "globals": "^15.14.0",
+         "input-otp": "^1.4.2",
+@@ -56,10 +58,10 @@
+         "next-themes": "^0.4.6",
+         "react": "^19.2.0",
+         "react-dom": "^19.2.0",
++        "recharts": "^2.15.3",
+         "sonner": "^2.0.7",
+         "tailwind-merge": "^3.0.1",
+         "tailwindcss": "^4.0.0",
+-        "recharts": "^2.15.3",
+         "tw-animate-css": "^1.4.0",
+         "typescript": "^5.7.2",
+         "vite": "^7.0.4"
+diff --git a/resources/js/components/ui/combobox.tsx b/resources/js/components/ui/combobox.tsx
+new file mode 100644
+index 0000000..77472b9
+--- /dev/null
++++ b/resources/js/components/ui/combobox.tsx
+@@ -0,0 +1,81 @@
++import * as React from 'react';
++import { Check, ChevronsUpDown } from 'lucide-react';
++
++import { cn } from '@/lib/utils';
++import { Button } from '@/components/ui/button';
++import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
++import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
++
++export interface ComboboxOption {
++    value: string;
++    label: string;
++    disabled?: boolean;
++}
++
++interface ComboboxProps {
++    options: ComboboxOption[];
++    value: string;
++    onValueChange: (value: string) => void;
++    placeholder?: string;
++    searchPlaceholder?: string;
++    emptyText?: string;
++    disabled?: boolean;
++    className?: string;
++}
++
++export function Combobox({
++    options,
++    value,
++    onValueChange,
++    placeholder = 'Pilih...',
++    searchPlaceholder = 'Cari...',
++    emptyText = 'Tidak ditemukan.',
++    disabled,
++    className,
++}: ComboboxProps) {
++    const [open, setOpen] = React.useState(false);
++    const selected = options.find((option) => option.value === value);
++
++    return (
++        <Popover open={open} onOpenChange={setOpen}>
++            <PopoverTrigger asChild>
++                <Button
++                    type="button"
++                    variant="outline"
++                    role="combobox"
++                    aria-expanded={open}
++                    disabled={disabled}
++                    className={cn('w-full justify-between font-normal', !selected && 'text-muted-foreground', className)}
++                >
++                    <span className="truncate">{selected ? selected.label : placeholder}</span>
++                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
++                </Button>
++            </PopoverTrigger>
++            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
++                <Command>
++                    <CommandInput placeholder={searchPlaceholder} />
++                    <CommandList>
++                        <CommandEmpty>{emptyText}</CommandEmpty>
++                        <CommandGroup>
++                            {options.map((option) => (
++                                <CommandItem
++                                    key={option.value}
++                                    value={option.label}
++                                    disabled={option.disabled}
++                                    onSelect={() => {
++                                        if (option.disabled) return;
++                                        onValueChange(option.value);
++                                        setOpen(false);
++                                    }}
++                                >
++                                    <Check className={cn('mr-2 h-4 w-4', value === option.value ? 'opacity-100' : 'opacity-0')} />
++                                    <span className={option.disabled ? 'text-muted-foreground' : ''}>{option.label}</span>
++                                </CommandItem>
++                            ))}
++                        </CommandGroup>
++                    </CommandList>
++                </Command>
++            </PopoverContent>
++        </Popover>
++    );
++}
+diff --git a/resources/js/components/ui/command.tsx b/resources/js/components/ui/command.tsx
+new file mode 100644
+index 0000000..9ff98a4
+--- /dev/null
++++ b/resources/js/components/ui/command.tsx
+@@ -0,0 +1,143 @@
++import * as React from "react"
++import { Command as CommandPrimitive } from "cmdk"
++import { SearchIcon } from "lucide-react"
++
++import { cn } from "@/lib/utils"
++
++function Command({
++  className,
++  ...props
++}: React.ComponentProps<typeof CommandPrimitive>) {
++  return (
++    <CommandPrimitive
++      data-slot="command"
++      className={cn(
++        "bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
++        className
++      )}
++      {...props}
++    />
++  )
++}
++
++function CommandInput({
++  className,
++  ...props
++}: React.ComponentProps<typeof CommandPrimitive.Input>) {
++  return (
++    <div
++      data-slot="command-input-wrapper"
++      className="flex h-9 items-center gap-2 border-b px-3"
++    >
++      <SearchIcon className="size-4 shrink-0 opacity-50" />
++      <CommandPrimitive.Input
++        data-slot="command-input"
++        className={cn(
++          "placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
++          className
++        )}
++        {...props}
++      />
++    </div>
++  )
++}
++
++function CommandList({
++  className,
++  ...props
++}: React.ComponentProps<typeof CommandPrimitive.List>) {
++  return (
++    <CommandPrimitive.List
++      data-slot="command-list"
++      className={cn(
++        "max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto",
++        className
++      )}
++      {...props}
++    />
++  )
++}
++
++function CommandEmpty({
++  ...props
++}: React.ComponentProps<typeof CommandPrimitive.Empty>) {
++  return (
++    <CommandPrimitive.Empty
++      data-slot="command-empty"
++      className="py-6 text-center text-sm"
++      {...props}
++    />
++  )
++}
++
++function CommandGroup({
++  className,
++  ...props
++}: React.ComponentProps<typeof CommandPrimitive.Group>) {
++  return (
++    <CommandPrimitive.Group
++      data-slot="command-group"
++      className={cn(
++        "text-foreground [&_[cmdk-group-heading]]:text-muted-foreground overflow-hidden p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium",
++        className
++      )}
++      {...props}
++    />
++  )
++}
++
++function CommandSeparator({
++  className,
++  ...props
++}: React.ComponentProps<typeof CommandPrimitive.Separator>) {
++  return (
++    <CommandPrimitive.Separator
++      data-slot="command-separator"
++      className={cn("bg-border -mx-1 h-px", className)}
++      {...props}
++    />
++  )
++}
++
++function CommandItem({
++  className,
++  ...props
++}: React.ComponentProps<typeof CommandPrimitive.Item>) {
++  return (
++    <CommandPrimitive.Item
++      data-slot="command-item"
++      className={cn(
++        "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
++        className
++      )}
++      {...props}
++    />
++  )
++}
++
++function CommandShortcut({
++  className,
++  ...props
++}: React.ComponentProps<"span">) {
++  return (
++    <span
++      data-slot="command-shortcut"
++      className={cn(
++        "text-muted-foreground ml-auto text-xs tracking-widest",
++        className
++      )}
++      {...props}
++    />
++  )
++}
++
++export {
++  Command,
++  CommandInput,
++  CommandList,
++  CommandEmpty,
++  CommandGroup,
++  CommandItem,
++  CommandShortcut,
++  CommandSeparator,
++}
+diff --git a/resources/js/components/ui/popover.tsx b/resources/js/components/ui/popover.tsx
+new file mode 100644
+index 0000000..6d51b6c
+--- /dev/null
++++ b/resources/js/components/ui/popover.tsx
+@@ -0,0 +1,46 @@
++import * as React from "react"
++import * as PopoverPrimitive from "@radix-ui/react-popover"
++
++import { cn } from "@/lib/utils"
++
++function Popover({
++  ...props
++}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
++  return <PopoverPrimitive.Root data-slot="popover" {...props} />
++}
++
++function PopoverTrigger({
++  ...props
++}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
++  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
++}
++
++function PopoverContent({
++  className,
++  align = "center",
++  sideOffset = 4,
++  ...props
++}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
++  return (
++    <PopoverPrimitive.Portal>
++      <PopoverPrimitive.Content
++        data-slot="popover-content"
++        align={align}
++        sideOffset={sideOffset}
++        className={cn(
++          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
++          className
++        )}
++        {...props}
++      />
++    </PopoverPrimitive.Portal>
++  )
++}
++
++function PopoverAnchor({
++  ...props
++}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
++  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
++}
++
++export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }
+diff --git a/resources/js/pages/pengadaan/barangs/create.tsx b/resources/js/pages/pengadaan/barangs/create.tsx
+index c072986..46cd202 100644
+--- a/resources/js/pages/pengadaan/barangs/create.tsx
++++ b/resources/js/pages/pengadaan/barangs/create.tsx
+@@ -1,80 +1,161 @@
++import InputError from '@/components/input-error';
+ import { Button } from '@/components/ui/button';
+-import AppLayout from '@/layouts/app-layout';
+-import { Link, Head, Form } from '@inertiajs/react';
++import { Combobox } from '@/components/ui/combobox';
+ import { Input } from '@/components/ui/input';
+-import { Barang, BreadcrumbItem } from '@/types';
+-import InputError from '@/components/input-error';
+-import { Label } from '@/components/ui/label';
+ import { Spinner } from '@/components/ui/spinner';
+-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
++import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
++import AppLayout from '@/layouts/app-layout';
++import { Barang, BreadcrumbItem } from '@/types';
++import { Head, Link, useForm } from '@inertiajs/react';
++import { Trash2 } from 'lucide-react';
+ 
+ interface Props {
+-    barangs: Barang[];
++    barangs: (Pick<Barang, 'id' | 'nama_barang' | 'satuan' | 'tipe_barang_id'> & {
++        tipe_barang?: { id: number; nama_tipe: string };
++    })[];
+     pengadaan_id: number;
+ }
+ 
++interface ItemRow {
++    barang_id: string;
++    jumlah: number;
++    harga: number;
++}
++
+ export default function BarangPengadaanCreatePage({ barangs, pengadaan_id }: Props) {
+     const breadcrumbs: BreadcrumbItem[] = [
+         { title: 'Pengadaan', href: '/pengadaan' },
+         { title: pengadaan_id.toString(), href: `/pengadaan/${pengadaan_id}` },
+-        { title: 'Buat', href: `/pengadaan/${pengadaan_id}/barangs/create` },
++        { title: 'Tambah Barang', href: `/pengadaan/${pengadaan_id}/barangs/create` },
+     ];
+ 
++    const { data, setData, post, processing, errors } = useForm<{ items: ItemRow[] }>({
++        items: [{ barang_id: '', jumlah: 1, harga: 0 }],
++    });
++
++    const addItem = () => setData('items', [...data.items, { barang_id: '', jumlah: 1, harga: 0 }]);
++    const removeItem = (index: number) => setData('items', data.items.filter((_, i) => i !== index));
++    const updateItem = (index: number, field: keyof ItemRow, value: string | number) => {
++        const updated = [...data.items];
++        updated[index] = { ...updated[index], [field]: value };
++        setData('items', updated);
++    };
++
++    const selectedBarangIds = data.items.map((item) => item.barang_id).filter(Boolean);
++
++    const handleSubmit = (e: React.FormEvent) => {
++        e.preventDefault();
++        post(`/pengadaan/${pengadaan_id}/barangs`);
++    };
++
++    if (barangs.length === 0) {
++        return (
++            <AppLayout breadcrumbs={breadcrumbs}>
++                <Head title="Tambah Barang Pengadaan" />
++                <div className="p-4">
++                    <p className="text-sm text-muted-foreground">Semua barang yang tersedia sudah ditambahkan ke pengadaan ini.</p>
++                    <Link href={`/pengadaan/${pengadaan_id}`}>
++                        <Button variant="outline" type="button" className="mt-4">Kembali</Button>
++                    </Link>
++                </div>
++            </AppLayout>
++        );
++    }
++
+     return (
+         <AppLayout breadcrumbs={breadcrumbs}>
+             <Head title="Tambah Barang Pengadaan" />
+-            <Form
+-                method="post"
+-                action={`/pengadaan/${pengadaan_id}/barangs`}
+-                disableWhileProcessing
+-                className="flex flex-col gap-6 p-4"
+-            >
+-                {({ processing, errors }) => (
+-                    <div className="grid gap-6">
+-                        <Input type="hidden" name="pembelian_id" value={pengadaan_id} />
++            <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
++                {(errors as Record<string, string>).items && (
++                    <InputError message={(errors as Record<string, string>).items} />
++                )}
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="barang_id">Barang</Label>
+-                            <Select name="barang_id" required>
+-                                <SelectTrigger>
+-                                    <SelectValue placeholder="Pilih barang" />
+-                                </SelectTrigger>
+-                                <SelectContent>
+-                                    {barangs.map((barang) => (
+-                                        <SelectItem key={barang.id} value={barang.id.toString()}>
+-                                            {barang.nama_barang}
+-                                        </SelectItem>
+-                                    ))}
+-                                </SelectContent>
+-                            </Select>
+-                            <InputError message={errors.barang_id} />
+-                        </div>
++                <div className="border rounded-md overflow-hidden max-w-4xl">
++                    <Table>
++                        <TableHeader>
++                            <TableRow>
++                                <TableHead className="w-[35%]">Barang</TableHead>
++                                <TableHead className="w-[15%]">Jumlah</TableHead>
++                                <TableHead className="w-[20%]">Harga (Rp)</TableHead>
++                                <TableHead className="w-[20%]">Total</TableHead>
++                                <TableHead className="w-[10%]">Aksi</TableHead>
++                            </TableRow>
++                        </TableHeader>
++                        <TableBody>
++                            {data.items.map((item, index) => {
++                                const rowBarangs = barangs.filter(
++                                    (b) => !selectedBarangIds.includes(b.id.toString()) || b.id.toString() === item.barang_id,
++                                );
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="jumlah">Jumlah</Label>
+-                            <Input id="jumlah" type="number" required autoFocus tabIndex={1}
+-                                autoComplete="jumlah" name="jumlah" placeholder="(e.g., 10)" min="1" />
+-                            <InputError message={errors.jumlah} className="mt-2" />
+-                        </div>
++                                return (
++                                    <TableRow key={index}>
++                                        <TableCell>
++                                            <Combobox
++                                                value={item.barang_id}
++                                                onValueChange={(v) => updateItem(index, 'barang_id', v)}
++                                                placeholder="Pilih barang..."
++                                                searchPlaceholder="Cari barang..."
++                                                emptyText="Barang tidak ditemukan."
++                                                options={rowBarangs.map((b) => ({
++                                                    value: b.id.toString(),
++                                                    label: `${b.nama_barang} (${b.satuan})`,
++                                                }))}
++                                            />
++                                            <InputError message={(errors as Record<string, string>)[`items.${index}.barang_id`]} />
++                                        </TableCell>
++                                        <TableCell>
++                                            <Input
++                                                type="number"
++                                                min={1}
++                                                value={item.jumlah}
++                                                onChange={(e) => updateItem(index, 'jumlah', parseInt(e.target.value) || 1)}
++                                            />
++                                            <InputError message={(errors as Record<string, string>)[`items.${index}.jumlah`]} />
++                                        </TableCell>
++                                        <TableCell>
++                                            <Input
++                                                type="number"
++                                                min={0}
++                                                value={item.harga}
++                                                onChange={(e) => updateItem(index, 'harga', parseInt(e.target.value) || 0)}
++                                            />
++                                            <InputError message={(errors as Record<string, string>)[`items.${index}.harga`]} />
++                                        </TableCell>
++                                        <TableCell className="text-sm">
++                                            {item.barang_id ? `Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}` : '—'}
++                                        </TableCell>
++                                        <TableCell>
++                                            <Button
++                                                type="button"
++                                                variant="ghost"
++                                                size="sm"
++                                                onClick={() => removeItem(index)}
++                                                disabled={data.items.length === 1}
++                                                className="text-destructive hover:text-destructive"
++                                            >
++                                                <Trash2 size={16} />
++                                            </Button>
++                                        </TableCell>
++                                    </TableRow>
++                                );
++                            })}
++                        </TableBody>
++                    </Table>
++                </div>
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="harga">Harga Satuan</Label>
+-                            <Input id="harga" type="number" required tabIndex={2}
+-                                autoComplete="harga" name="harga" placeholder="(e.g., 5000)" min="0" />
+-                            <InputError message={errors.harga} className="mt-2" />
+-                        </div>
++                <Button type="button" variant="outline" onClick={addItem} className="w-fit" disabled={data.items.length >= barangs.length}>
++                    + Tambah Baris
++                </Button>
+ 
+-                        <div className="space-x-2">
+-                            <Button type="submit" className="mt-2 w-fit">
+-                                {processing ? <><Spinner className="mr-2" />Creating...</> : 'Buat Barang Pengadaan'}
+-                            </Button>
+-                            <Link href={`/pengadaan/${pengadaan_id}`}>
+-                                <Button variant="outline" type="button" className="mt-2 w-fit">Kembali</Button>
+-                            </Link>
+-                        </div>
+-                    </div>
+-                )}
+-            </Form>
++                <div className="flex gap-2">
++                    <Button type="submit" disabled={processing}>
++                        {processing ? <><Spinner className="mr-2" />Menyimpan...</> : 'Tambah Barang'}
++                    </Button>
++                    <Link href={`/pengadaan/${pengadaan_id}`}>
++                        <Button variant="outline" type="button">Kembali</Button>
++                    </Link>
++                </div>
++            </form>
+         </AppLayout>
+     );
+ }
+diff --git a/resources/js/pages/pengadaan/barangs/edit.tsx b/resources/js/pages/pengadaan/barangs/edit.tsx
+index fe4f9d9..9a9c317 100644
+--- a/resources/js/pages/pengadaan/barangs/edit.tsx
++++ b/resources/js/pages/pengadaan/barangs/edit.tsx
+@@ -1,16 +1,18 @@
++import InputError from '@/components/input-error';
+ import { Button } from '@/components/ui/button';
+-import AppLayout from '@/layouts/app-layout';
+-import { Link, Head, Form } from '@inertiajs/react';
++import { Combobox } from '@/components/ui/combobox';
+ import { Input } from '@/components/ui/input';
+-import { Barang, BarangPengadaan, BreadcrumbItem } from '@/types';
+-import InputError from '@/components/input-error';
+ import { Label } from '@/components/ui/label';
+ import { Spinner } from '@/components/ui/spinner';
+-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
++import AppLayout from '@/layouts/app-layout';
++import { Barang, BarangPengadaan, BreadcrumbItem } from '@/types';
++import { Head, Link, useForm } from '@inertiajs/react';
+ 
+ interface Props {
+     barang_pengadaan: BarangPengadaan;
+-    barangs: Barang[];
++    barangs: (Pick<Barang, 'id' | 'nama_barang' | 'satuan' | 'tipe_barang_id'> & {
++        tipe_barang?: { id: number; nama_tipe: string };
++    })[];
+     pengadaan_id: number;
+ }
+ 
+@@ -21,63 +23,62 @@ export default function BarangPengadaanEditPage({ barang_pengadaan, barangs, pen
+         { title: 'Ubah', href: `/pengadaan/${pengadaan_id}/barangs/${barang_pengadaan.id}/edit` },
+     ];
+ 
++    const { data, setData, put, processing, errors } = useForm({
++        barang_id: barang_pengadaan.barang_id.toString(),
++        jumlah: barang_pengadaan.jumlah,
++        harga: barang_pengadaan.harga,
++    });
++
++    const handleSubmit = (e: React.FormEvent) => {
++        e.preventDefault();
++        put(`/pengadaan/${pengadaan_id}/barangs/${barang_pengadaan.id}`);
++    };
++
+     return (
+         <AppLayout breadcrumbs={breadcrumbs}>
+             <Head title="Ubah Barang Pengadaan" />
+-            <Form
+-                method="put"
+-                action={`/pengadaan/${pengadaan_id}/barangs/${barang_pengadaan.id}`}
+-                disableWhileProcessing
+-                className="flex flex-col gap-6 p-4"
+-            >
+-                {({ processing, errors }) => (
+-                    <div className="grid gap-6">
+-                        <Input type="hidden" name="pembelian_id" value={pengadaan_id} />
+-
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="barang_id">Barang</Label>
+-                            <Select name="barang_id" required defaultValue={barang_pengadaan.barang_id.toString()}>
+-                                <SelectTrigger>
+-                                    <SelectValue placeholder="Pilih barang" />
+-                                </SelectTrigger>
+-                                <SelectContent>
+-                                    {barangs.map((barang) => (
+-                                        <SelectItem key={barang.id} value={barang.id.toString()}>
+-                                            {barang.nama_barang}
+-                                        </SelectItem>
+-                                    ))}
+-                                </SelectContent>
+-                            </Select>
+-                            <InputError message={errors.barang_id} />
+-                        </div>
++            <form onSubmit={handleSubmit} className="flex flex-col gap-6 p-4">
++                <div className="grid gap-6 max-w-lg">
++                    <div className="grid gap-2">
++                        <Label htmlFor="barang_id">Barang</Label>
++                        <Combobox
++                            value={data.barang_id}
++                            onValueChange={(v) => setData('barang_id', v)}
++                            placeholder="Pilih barang..."
++                            searchPlaceholder="Cari barang..."
++                            emptyText="Barang tidak ditemukan."
++                            options={barangs.map((barang) => ({
++                                value: barang.id.toString(),
++                                label: `${barang.nama_barang} (${barang.satuan})`,
++                            }))}
++                        />
++                        <InputError message={errors.barang_id} />
++                    </div>
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="jumlah">Jumlah</Label>
+-                            <Input id="jumlah" type="number" required tabIndex={1}
+-                                autoComplete="jumlah" name="jumlah"
+-                                defaultValue={barang_pengadaan.jumlah} placeholder="(e.g., 10)" min="1" />
+-                            <InputError message={errors.jumlah} className="mt-2" />
+-                        </div>
++                    <div className="grid gap-2">
++                        <Label htmlFor="jumlah">Jumlah</Label>
++                        <Input id="jumlah" type="number" required min="1" tabIndex={1}
++                            value={data.jumlah} onChange={(e) => setData('jumlah', parseInt(e.target.value) || 1)} />
++                        <InputError message={errors.jumlah} className="mt-2" />
++                    </div>
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="harga">Harga Satuan</Label>
+-                            <Input id="harga" type="number" required tabIndex={2}
+-                                autoComplete="harga" name="harga"
+-                                defaultValue={barang_pengadaan.harga} placeholder="(e.g., 5000)" min="0" />
+-                            <InputError message={errors.harga} className="mt-2" />
+-                        </div>
++                    <div className="grid gap-2">
++                        <Label htmlFor="harga">Harga Satuan</Label>
++                        <Input id="harga" type="number" required min="0" tabIndex={2}
++                            value={data.harga} onChange={(e) => setData('harga', parseInt(e.target.value) || 0)} />
++                        <InputError message={errors.harga} className="mt-2" />
++                    </div>
+ 
+-                        <div className="space-x-2">
+-                            <Button type="submit" className="mt-2 w-fit">
+-                                {processing ? <><Spinner className="mr-2" />Updating...</> : 'Perbarui Barang Pengadaan'}
+-                            </Button>
+-                            <Link href={`/pengadaan/${pengadaan_id}`}>
+-                                <Button variant="outline" type="button" className="mt-2 w-fit">Kembali</Button>
+-                            </Link>
+-                        </div>
++                    <div className="space-x-2">
++                        <Button type="submit" disabled={processing} className="mt-2 w-fit">
++                            {processing ? <><Spinner className="mr-2" />Menyimpan...</> : 'Perbarui Barang Pengadaan'}
++                        </Button>
++                        <Link href={`/pengadaan/${pengadaan_id}`}>
++                            <Button variant="outline" type="button" className="mt-2 w-fit">Kembali</Button>
++                        </Link>
+                     </div>
+-                )}
+-            </Form>
++                </div>
++            </form>
+         </AppLayout>
+     );
+ }
+diff --git a/resources/js/pages/pengadaan/create.tsx b/resources/js/pages/pengadaan/create.tsx
+index d7e1fe4..9a8b4d4 100644
+--- a/resources/js/pages/pengadaan/create.tsx
++++ b/resources/js/pages/pengadaan/create.tsx
+@@ -1,6 +1,7 @@
+ import InputError from '@/components/input-error';
+ import { Badge } from '@/components/ui/badge';
+ import { Button } from '@/components/ui/button';
++import { Combobox } from '@/components/ui/combobox';
+ import { Input } from '@/components/ui/input';
+ import { Label } from '@/components/ui/label';
+ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+@@ -197,34 +198,20 @@ export default function PengadaanCreatePage({ vendors, barangs, allVendorPrices
+                                     return (
+                                         <TableRow key={index}>
+                                             <TableCell>
+-                                                <Select
++                                                <Combobox
+                                                     value={item.barang_id}
+                                                     onValueChange={(v) => updateItem(index, 'barang_id', v)}
+-                                                >
+-                                                    <SelectTrigger>
+-                                                        <SelectValue placeholder="Pilih barang..." />
+-                                                    </SelectTrigger>
+-                                                    <SelectContent>
+-                                                        {rowBarangs.length === 0 ? (
+-                                                            <div className="py-2 px-3 text-sm text-muted-foreground">
+-                                                                Tidak ada barang untuk tipe ini.
+-                                                            </div>
+-                                                        ) : (
+-                                                            rowBarangs.map((b) => (
+-                                                                <SelectItem
+-                                                                    key={b.id}
+-                                                                    value={b.id.toString()}
+-                                                                    disabled={
+-                                                                        selectedBarangIds.includes(b.id.toString()) &&
+-                                                                        item.barang_id !== b.id.toString()
+-                                                                    }
+-                                                                >
+-                                                                    {b.nama_barang}
+-                                                                </SelectItem>
+-                                                            ))
+-                                                        )}
+-                                                    </SelectContent>
+-                                                </Select>
++                                                    placeholder="Pilih barang..."
++                                                    searchPlaceholder="Cari barang..."
++                                                    emptyText="Tidak ada barang untuk tipe ini."
++                                                    options={rowBarangs.map((b) => ({
++                                                        value: b.id.toString(),
++                                                        label: b.nama_barang,
++                                                        disabled:
++                                                            selectedBarangIds.includes(b.id.toString()) &&
++                                                            item.barang_id !== b.id.toString(),
++                                                    }))}
++                                                />
+                                                 <InputError message={(errors as Record<string, string>)[`items.${index}.barang_id`]} />
+                                             </TableCell>
+                                             <TableCell>
+diff --git a/resources/js/pages/permintaan/barangs/create.tsx b/resources/js/pages/permintaan/barangs/create.tsx
+index fdf26a6..628df7b 100644
+--- a/resources/js/pages/permintaan/barangs/create.tsx
++++ b/resources/js/pages/permintaan/barangs/create.tsx
+@@ -1,73 +1,146 @@
++import InputError from '@/components/input-error';
+ import { Button } from '@/components/ui/button';
+-import AppLayout from '@/layouts/app-layout';
+-import { Link, Head, Form } from '@inertiajs/react';
++import { Combobox } from '@/components/ui/combobox';
+ import { Input } from '@/components/ui/input';
+-import { BreadcrumbItem, Barang } from '@/types';
+-import InputError from '@/components/input-error';
+-import { Label } from '@/components/ui/label';
+ import { Spinner } from '@/components/ui/spinner';
+-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
++import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
++import AppLayout from '@/layouts/app-layout';
++import { Barang, BreadcrumbItem } from '@/types';
++import { Head, Link, useForm } from '@inertiajs/react';
++import { Trash2 } from 'lucide-react';
+ 
+ interface Props {
+-    barangs: Barang[];
++    barangs: (Pick<Barang, 'id' | 'nama_barang' | 'satuan' | 'tipe_barang_id'> & {
++        tipe_barang?: { id: number; nama_tipe: string };
++    })[];
+     permintaan_id: number;
+ }
+ 
++interface ItemRow {
++    barang_id: string;
++    jumlah: number;
++}
++
+ export default function BarangPermintaanCreatePage({ barangs, permintaan_id }: Props) {
+     const breadcrumbs: BreadcrumbItem[] = [
+         { title: 'Permintaan', href: '/permintaan' },
+         { title: permintaan_id.toString(), href: `/permintaan/${permintaan_id}` },
+-        { title: 'Buat', href: `/permintaan/${permintaan_id}/barangs/create` },
++        { title: 'Tambah Barang', href: `/permintaan/${permintaan_id}/barangs/create` },
+     ];
+ 
++    const { data, setData, post, processing, errors } = useForm<{ items: ItemRow[] }>({
++        items: [{ barang_id: '', jumlah: 1 }],
++    });
++
++    const addItem = () => setData('items', [...data.items, { barang_id: '', jumlah: 1 }]);
++    const removeItem = (index: number) => setData('items', data.items.filter((_, i) => i !== index));
++    const updateItem = (index: number, field: keyof ItemRow, value: string | number) => {
++        const updated = [...data.items];
++        updated[index] = { ...updated[index], [field]: value };
++        setData('items', updated);
++    };
++
++    const selectedBarangIds = data.items.map((item) => item.barang_id).filter(Boolean);
++
++    const handleSubmit = (e: React.FormEvent) => {
++        e.preventDefault();
++        post(`/permintaan/${permintaan_id}/barangs`);
++    };
++
++    if (barangs.length === 0) {
++        return (
++            <AppLayout breadcrumbs={breadcrumbs}>
++                <Head title="Tambah Barang Permintaan" />
++                <div className="p-4">
++                    <p className="text-sm text-muted-foreground">Semua barang yang tersedia sudah ditambahkan ke permintaan ini.</p>
++                    <Link href={`/permintaan/${permintaan_id}`}>
++                        <Button variant="outline" type="button" className="mt-4">Kembali</Button>
++                    </Link>
++                </div>
++            </AppLayout>
++        );
++    }
++
+     return (
+         <AppLayout breadcrumbs={breadcrumbs}>
+-            <Head title="Buat Barang Permintaan" />
+-            <Form
+-                method="post"
+-                action={`/permintaan/${permintaan_id}/barangs`}
+-                disableWhileProcessing
+-                className="flex flex-col gap-6 p-4"
+-            >
+-                {({ processing, errors }) => (
+-                    <div className="grid gap-6">
+-                        <Input type="hidden" name="pengajuan_id" value={permintaan_id} />
++            <Head title="Tambah Barang Permintaan" />
++            <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
++                {(errors as Record<string, string>).items && (
++                    <InputError message={(errors as Record<string, string>).items} />
++                )}
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="barang_id">Barang</Label>
+-                            <Select name="barang_id" required>
+-                                <SelectTrigger>
+-                                    <SelectValue placeholder="Pilih barang" />
+-                                </SelectTrigger>
+-                                <SelectContent>
+-                                    {barangs.map((barang) => (
+-                                        <SelectItem key={barang.id} value={barang.id.toString()}>
+-                                            {barang.nama_barang}
+-                                        </SelectItem>
+-                                    ))}
+-                                </SelectContent>
+-                            </Select>
+-                            <InputError message={errors.barang_id} />
+-                        </div>
++                <div className="border rounded-md overflow-hidden max-w-2xl">
++                    <Table>
++                        <TableHeader>
++                            <TableRow>
++                                <TableHead className="w-[60%]">Barang</TableHead>
++                                <TableHead className="w-[25%]">Jumlah</TableHead>
++                                <TableHead className="w-[15%]">Aksi</TableHead>
++                            </TableRow>
++                        </TableHeader>
++                        <TableBody>
++                            {data.items.map((item, index) => {
++                                const rowBarangs = barangs.filter(
++                                    (b) => !selectedBarangIds.includes(b.id.toString()) || b.id.toString() === item.barang_id,
++                                );
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="jumlah">Jumlah</Label>
+-                            <Input id="jumlah" type="number" required autoFocus tabIndex={1}
+-                                autoComplete="jumlah" name="jumlah" placeholder="(e.g., 10)" min="1" />
+-                            <InputError message={errors.jumlah} className="mt-2" />
+-                        </div>
++                                return (
++                                    <TableRow key={index}>
++                                        <TableCell>
++                                            <Combobox
++                                                value={item.barang_id}
++                                                onValueChange={(v) => updateItem(index, 'barang_id', v)}
++                                                placeholder="Pilih barang..."
++                                                searchPlaceholder="Cari barang..."
++                                                emptyText="Barang tidak ditemukan."
++                                                options={rowBarangs.map((b) => ({
++                                                    value: b.id.toString(),
++                                                    label: `${b.nama_barang} (${b.satuan})`,
++                                                }))}
++                                            />
++                                            <InputError message={(errors as Record<string, string>)[`items.${index}.barang_id`]} />
++                                        </TableCell>
++                                        <TableCell>
++                                            <Input
++                                                type="number"
++                                                min={1}
++                                                value={item.jumlah}
++                                                onChange={(e) => updateItem(index, 'jumlah', parseInt(e.target.value) || 1)}
++                                            />
++                                            <InputError message={(errors as Record<string, string>)[`items.${index}.jumlah`]} />
++                                        </TableCell>
++                                        <TableCell>
++                                            <Button
++                                                type="button"
++                                                variant="ghost"
++                                                size="sm"
++                                                onClick={() => removeItem(index)}
++                                                disabled={data.items.length === 1}
++                                                className="text-destructive hover:text-destructive"
++                                            >
++                                                <Trash2 size={16} />
++                                            </Button>
++                                        </TableCell>
++                                    </TableRow>
++                                );
++                            })}
++                        </TableBody>
++                    </Table>
++                </div>
+ 
+-                        <div className="space-x-2">
+-                            <Button type="submit" className="mt-2 w-fit">
+-                                {processing ? <><Spinner className="mr-2" />Creating...</> : 'Buat Barang Permintaan'}
+-                            </Button>
+-                            <Link href={`/permintaan/${permintaan_id}`}>
+-                                <Button variant="outline" type="button" className="mt-2 w-fit">Kembali</Button>
+-                            </Link>
+-                        </div>
+-                    </div>
+-                )}
+-            </Form>
++                <Button type="button" variant="outline" onClick={addItem} className="w-fit" disabled={data.items.length >= barangs.length}>
++                    + Tambah Baris
++                </Button>
++
++                <div className="flex gap-2">
++                    <Button type="submit" disabled={processing}>
++                        {processing ? <><Spinner className="mr-2" />Menyimpan...</> : 'Tambah Barang'}
++                    </Button>
++                    <Link href={`/permintaan/${permintaan_id}`}>
++                        <Button variant="outline" type="button">Kembali</Button>
++                    </Link>
++                </div>
++            </form>
+         </AppLayout>
+     );
+ }
+diff --git a/resources/js/pages/permintaan/barangs/edit.tsx b/resources/js/pages/permintaan/barangs/edit.tsx
+index e203b0f..5536af1 100644
+--- a/resources/js/pages/permintaan/barangs/edit.tsx
++++ b/resources/js/pages/permintaan/barangs/edit.tsx
+@@ -1,23 +1,18 @@
++import InputError from '@/components/input-error';
+ import { Button } from '@/components/ui/button';
+-import AppLayout from '@/layouts/app-layout';
+-import { Link, Head, Form } from '@inertiajs/react';
++import { Combobox } from '@/components/ui/combobox';
+ import { Input } from '@/components/ui/input';
+-import { BreadcrumbItem, Barang } from '@/types';
+-import InputError from '@/components/input-error';
+ import { Label } from '@/components/ui/label';
+ import { Spinner } from '@/components/ui/spinner';
+-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+-
+-interface BarangPermintaan {
+-    id: number;
+-    pengajuan_id: number;
+-    barang_id: number;
+-    jumlah: number;
+-}
++import AppLayout from '@/layouts/app-layout';
++import { Barang, BarangPermintaan, BreadcrumbItem } from '@/types';
++import { Head, Link, useForm } from '@inertiajs/react';
+ 
+ interface Props {
+     barang_permintaan: BarangPermintaan;
+-    barangs: Barang[];
++    barangs: (Pick<Barang, 'id' | 'nama_barang' | 'satuan' | 'tipe_barang_id'> & {
++        tipe_barang?: { id: number; nama_tipe: string };
++    })[];
+     permintaan_id: number;
+ }
+ 
+@@ -28,55 +23,54 @@ export default function BarangPermintaanEditPage({ barang_permintaan, barangs, p
+         { title: 'Ubah', href: `/permintaan/${permintaan_id}/barangs/${barang_permintaan.id}/edit` },
+     ];
+ 
++    const { data, setData, put, processing, errors } = useForm({
++        barang_id: barang_permintaan.barang_id.toString(),
++        jumlah: barang_permintaan.jumlah,
++    });
++
++    const handleSubmit = (e: React.FormEvent) => {
++        e.preventDefault();
++        put(`/permintaan/${permintaan_id}/barangs/${barang_permintaan.id}`);
++    };
++
+     return (
+         <AppLayout breadcrumbs={breadcrumbs}>
+             <Head title="Ubah Barang Permintaan" />
+-            <Form
+-                method="put"
+-                action={`/permintaan/${permintaan_id}/barangs/${barang_permintaan.id}`}
+-                disableWhileProcessing
+-                className="flex flex-col gap-6 p-4"
+-            >
+-                {({ processing, errors }) => (
+-                    <div className="grid gap-6">
+-                        <Input type="hidden" name="pengajuan_id" value={permintaan_id} />
+-
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="barang_id">Barang</Label>
+-                            <Select name="barang_id" required defaultValue={barang_permintaan.barang_id.toString()}>
+-                                <SelectTrigger>
+-                                    <SelectValue placeholder="Pilih barang" />
+-                                </SelectTrigger>
+-                                <SelectContent>
+-                                    {barangs.map((barang) => (
+-                                        <SelectItem key={barang.id} value={barang.id.toString()}>
+-                                            {barang.nama_barang}
+-                                        </SelectItem>
+-                                    ))}
+-                                </SelectContent>
+-                            </Select>
+-                            <InputError message={errors.barang_id} />
+-                        </div>
++            <form onSubmit={handleSubmit} className="flex flex-col gap-6 p-4">
++                <div className="grid gap-6 max-w-lg">
++                    <div className="grid gap-2">
++                        <Label htmlFor="barang_id">Barang</Label>
++                        <Combobox
++                            value={data.barang_id}
++                            onValueChange={(v) => setData('barang_id', v)}
++                            placeholder="Pilih barang..."
++                            searchPlaceholder="Cari barang..."
++                            emptyText="Barang tidak ditemukan."
++                            options={barangs.map((barang) => ({
++                                value: barang.id.toString(),
++                                label: `${barang.nama_barang} (${barang.satuan})`,
++                            }))}
++                        />
++                        <InputError message={errors.barang_id} />
++                    </div>
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="jumlah">Jumlah</Label>
+-                            <Input id="jumlah" type="number" required tabIndex={1}
+-                                autoComplete="jumlah" name="jumlah"
+-                                defaultValue={barang_permintaan.jumlah} placeholder="(e.g., 10)" min="1" />
+-                            <InputError message={errors.jumlah} className="mt-2" />
+-                        </div>
++                    <div className="grid gap-2">
++                        <Label htmlFor="jumlah">Jumlah</Label>
++                        <Input id="jumlah" type="number" required min="1" tabIndex={1}
++                            value={data.jumlah} onChange={(e) => setData('jumlah', parseInt(e.target.value) || 1)} />
++                        <InputError message={errors.jumlah} className="mt-2" />
++                    </div>
+ 
+-                        <div className="space-x-2">
+-                            <Button type="submit" className="mt-2 w-fit">
+-                                {processing ? <><Spinner className="mr-2" />Updating...</> : 'Perbarui Barang Permintaan'}
+-                            </Button>
+-                            <Link href={`/permintaan/${permintaan_id}`}>
+-                                <Button variant="outline" type="button" className="mt-2 w-fit">Kembali</Button>
+-                            </Link>
+-                        </div>
++                    <div className="space-x-2">
++                        <Button type="submit" disabled={processing} className="mt-2 w-fit">
++                            {processing ? <><Spinner className="mr-2" />Menyimpan...</> : 'Perbarui Barang Permintaan'}
++                        </Button>
++                        <Link href={`/permintaan/${permintaan_id}`}>
++                            <Button variant="outline" type="button" className="mt-2 w-fit">Kembali</Button>
++                        </Link>
+                     </div>
+-                )}
+-            </Form>
++                </div>
++            </form>
+         </AppLayout>
+     );
+ }
+diff --git a/resources/js/pages/permintaan/create.tsx b/resources/js/pages/permintaan/create.tsx
+index 6a79688..ab2a45c 100644
+--- a/resources/js/pages/permintaan/create.tsx
++++ b/resources/js/pages/permintaan/create.tsx
+@@ -1,5 +1,6 @@
+ import InputError from '@/components/input-error';
+ import { Button } from '@/components/ui/button';
++import { Combobox } from '@/components/ui/combobox';
+ import { Input } from '@/components/ui/input';
+ import { Label } from '@/components/ui/label';
+ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+@@ -143,34 +144,20 @@ export default function PermintaanCreatePage({ barangs }: Props) {
+                                     return (
+                                         <TableRow key={index}>
+                                             <TableCell>
+-                                                <Select
++                                                <Combobox
+                                                     value={item.barang_id}
+                                                     onValueChange={(v) => updateItem(index, 'barang_id', v)}
+-                                                >
+-                                                    <SelectTrigger>
+-                                                        <SelectValue placeholder="Pilih barang..." />
+-                                                    </SelectTrigger>
+-                                                    <SelectContent>
+-                                                        {rowBarangs.length === 0 ? (
+-                                                            <div className="py-2 px-3 text-sm text-muted-foreground">
+-                                                                Tidak ada barang untuk tipe ini.
+-                                                            </div>
+-                                                        ) : (
+-                                                            rowBarangs.map((b) => (
+-                                                                <SelectItem
+-                                                                    key={b.id}
+-                                                                    value={b.id.toString()}
+-                                                                    disabled={
+-                                                                        selectedBarangIds.includes(b.id.toString()) &&
+-                                                                        item.barang_id !== b.id.toString()
+-                                                                    }
+-                                                                >
+-                                                                    {b.nama_barang}
+-                                                                </SelectItem>
+-                                                            ))
+-                                                        )}
+-                                                    </SelectContent>
+-                                                </Select>
++                                                    placeholder="Pilih barang..."
++                                                    searchPlaceholder="Cari barang..."
++                                                    emptyText="Tidak ada barang untuk tipe ini."
++                                                    options={rowBarangs.map((b) => ({
++                                                        value: b.id.toString(),
++                                                        label: b.nama_barang,
++                                                        disabled:
++                                                            selectedBarangIds.includes(b.id.toString()) &&
++                                                            item.barang_id !== b.id.toString(),
++                                                    }))}
++                                                />
+                                                 <InputError message={(errors as Record<string, string>)[`items.${index}.barang_id`]} />
+                                             </TableCell>
+                                             <TableCell>
+diff --git a/resources/js/pages/vendors/barangs/create.tsx b/resources/js/pages/vendors/barangs/create.tsx
+index 1088f1a..52c8eae 100644
+--- a/resources/js/pages/vendors/barangs/create.tsx
++++ b/resources/js/pages/vendors/barangs/create.tsx
+@@ -1,12 +1,12 @@
+ import InputError from '@/components/input-error';
+ import { Button } from '@/components/ui/button';
++import { Combobox } from '@/components/ui/combobox';
+ import { Input } from '@/components/ui/input';
+ import { Label } from '@/components/ui/label';
+-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+ import { Spinner } from '@/components/ui/spinner';
+ import AppLayout from '@/layouts/app-layout';
+ import { Barang, BreadcrumbItem, Vendor } from '@/types';
+-import { Form, Head, Link } from '@inertiajs/react';
++import { Head, Link, useForm } from '@inertiajs/react';
+ 
+ interface Props {
+     vendor: Vendor;
+@@ -20,55 +20,63 @@ export default function VendorBarangCreatePage({ vendor, barangs }: Props) {
+         { title: 'Tambah Barang', href: `/vendors/${vendor.id}/barangs/create` },
+     ];
+ 
++    const { data, setData, post, processing, errors } = useForm({
++        barang_id: '',
++        harga: '',
++    });
++
++    const handleSubmit = (e: React.FormEvent) => {
++        e.preventDefault();
++        post(`/vendors/${vendor.id}/barangs`);
++    };
++
+     return (
+         <AppLayout breadcrumbs={breadcrumbs}>
+             <Head title={`Tambah Barang — ${vendor.nama_vendor}`} />
+-            <Form method="post" action={`/vendors/${vendor.id}/barangs`} disableWhileProcessing className="flex flex-col gap-6 p-4">
+-                {({ processing, errors }) => (
+-                    <div className="grid gap-6 max-w-lg">
+-                        <div className="rounded-md border bg-muted/30 p-3">
+-                            <p className="font-semibold">{vendor.nama_vendor}</p>
+-                            <p className="text-sm text-muted-foreground">{vendor.email ?? '—'} · {vendor.telepon ?? '—'}</p>
+-                        </div>
++            <form onSubmit={handleSubmit} className="flex flex-col gap-6 p-4">
++                <div className="grid gap-6 max-w-lg">
++                    <div className="rounded-md border bg-muted/30 p-3">
++                        <p className="font-semibold">{vendor.nama_vendor}</p>
++                        <p className="text-sm text-muted-foreground">{vendor.email ?? '—'} · {vendor.telepon ?? '—'}</p>
++                    </div>
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="barang_id">Barang <span className="text-red-500">*</span></Label>
+-                            {barangs.length === 0 ? (
+-                                <p className="text-sm text-muted-foreground">Semua barang sudah ditambahkan ke vendor ini.</p>
+-                            ) : (
+-                                <Select name="barang_id" required>
+-                                    <SelectTrigger>
+-                                        <SelectValue placeholder="Pilih barang" />
+-                                    </SelectTrigger>
+-                                    <SelectContent>
+-                                        {barangs.map((b) => (
+-                                            <SelectItem key={b.id} value={b.id.toString()}>
+-                                                {b.nama_barang} ({b.satuan}) — {b.tipe_barang?.nama_tipe ?? 'Tanpa tipe'}
+-                                            </SelectItem>
+-                                        ))}
+-                                    </SelectContent>
+-                                </Select>
+-                            )}
+-                            <InputError message={errors.barang_id} />
+-                        </div>
++                    <div className="grid gap-2">
++                        <Label htmlFor="barang_id">Barang <span className="text-red-500">*</span></Label>
++                        {barangs.length === 0 ? (
++                            <p className="text-sm text-muted-foreground">Semua barang sudah ditambahkan ke vendor ini.</p>
++                        ) : (
++                            <Combobox
++                                value={data.barang_id}
++                                onValueChange={(v) => setData('barang_id', v)}
++                                placeholder="Pilih barang"
++                                searchPlaceholder="Cari barang..."
++                                emptyText="Barang tidak ditemukan."
++                                options={barangs.map((b) => ({
++                                    value: b.id.toString(),
++                                    label: `${b.nama_barang} (${b.satuan}) — ${b.tipe_barang?.nama_tipe ?? 'Tanpa tipe'}`,
++                                }))}
++                            />
++                        )}
++                        <InputError message={errors.barang_id} />
++                    </div>
+ 
+-                        <div className="grid gap-2">
+-                            <Label htmlFor="harga">Harga Satuan (Rp) <span className="text-red-500">*</span></Label>
+-                            <Input id="harga" name="harga" type="number" min="0" required placeholder="contoh: 15000" />
+-                            <InputError message={errors.harga} />
+-                        </div>
++                    <div className="grid gap-2">
++                        <Label htmlFor="harga">Harga Satuan (Rp) <span className="text-red-500">*</span></Label>
++                        <Input id="harga" type="number" min="0" required placeholder="contoh: 15000"
++                            value={data.harga} onChange={(e) => setData('harga', e.target.value)} />
++                        <InputError message={errors.harga} />
++                    </div>
+ 
+-                        <div className="flex gap-2">
+-                            <Button type="submit" disabled={processing || barangs.length === 0}>
+-                                {processing ? <><Spinner className="mr-2" /> Menyimpan...</> : 'Tambah Barang'}
+-                            </Button>
+-                            <Link href={`/vendors/${vendor.id}/barangs`}>
+-                                <Button variant="outline" type="button">Kembali</Button>
+-                            </Link>
+-                        </div>
++                    <div className="flex gap-2">
++                        <Button type="submit" disabled={processing || barangs.length === 0}>
++                            {processing ? <><Spinner className="mr-2" /> Menyimpan...</> : 'Tambah Barang'}
++                        </Button>
++                        <Link href={`/vendors/${vendor.id}/barangs`}>
++                            <Button variant="outline" type="button">Kembali</Button>
++                        </Link>
+                     </div>
+-                )}
+-            </Form>
++                </div>
++            </form>
+         </AppLayout>
+     );
+ }
+diff --git a/tests/Feature/BarangPengadaanTest.php b/tests/Feature/BarangPengadaanTest.php
+new file mode 100644
+index 0000000..401f404
+--- /dev/null
++++ b/tests/Feature/BarangPengadaanTest.php
+@@ -0,0 +1,115 @@
++<?php
++
++use App\Models\Barang_Pengadaan;
++use App\Models\Barangs;
++use App\Models\Pengadaan;
++use App\Models\User;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Spatie\Permission\Models\Permission;
++
++uses(RefreshDatabase::class);
++
++beforeEach(function () {
++    foreach ([
++        'pengadaan barang create', 'pengadaan barang edit', 'pengadaan barang delete',
++    ] as $name) {
++        Permission::create(['name' => $name]);
++    }
++});
++
++function actingUserWithBarangPengadaanPermissions()
++{
++    $user = User::factory()->create();
++    $user->givePermissionTo([
++        'pengadaan barang create', 'pengadaan barang edit', 'pengadaan barang delete',
++    ]);
++
++    return $user;
++}
++
++test('create page excludes barangs already added to this pengadaan', function () {
++    $user = actingUserWithBarangPengadaanPermissions();
++    $pengadaan = Pengadaan::factory()->create();
++    $sudahAda = Barangs::factory()->create(['nama_barang' => 'Sudah Ada']);
++    $belumAda = Barangs::factory()->create(['nama_barang' => 'Belum Ada']);
++
++    $pengadaan->barang_pengadaan()->create(['barang_id' => $sudahAda->id, 'jumlah' => 1, 'harga' => 100]);
++
++    $response = $this->actingAs($user)->get("/pengadaan/{$pengadaan->id}/barangs/create");
++
++    $response->assertInertia(fn ($page) => $page
++        ->has('barangs', 1)
++        ->where('barangs.0.nama_barang', 'Belum Ada'));
++});
++
++test('store adds multiple items in a single request and recalculates total_harga', function () {
++    $user = actingUserWithBarangPengadaanPermissions();
++    $pengadaan = Pengadaan::factory()->create(['total_harga' => 0]);
++    $barangA = Barangs::factory()->create();
++    $barangB = Barangs::factory()->create();
++
++    $response = $this->actingAs($user)->post("/pengadaan/{$pengadaan->id}/barangs", [
++        'items' => [
++            ['barang_id' => $barangA->id, 'jumlah' => 2, 'harga' => 10000],
++            ['barang_id' => $barangB->id, 'jumlah' => 1, 'harga' => 50000],
++        ],
++    ]);
++
++    $response->assertRedirect("/pengadaan/{$pengadaan->id}")->assertSessionHas('success');
++
++    expect($pengadaan->barang_pengadaan()->count())->toBe(2);
++
++    $pengadaan->refresh();
++    expect((int) $pengadaan->total_harga)->toBe(70000); // (2*10000) + (1*50000)
++});
++
++test('store rejects duplicate barang within the same submission', function () {
++    $user = actingUserWithBarangPengadaanPermissions();
++    $pengadaan = Pengadaan::factory()->create();
++    $barang = Barangs::factory()->create();
++
++    $response = $this->actingAs($user)->post("/pengadaan/{$pengadaan->id}/barangs", [
++        'items' => [
++            ['barang_id' => $barang->id, 'jumlah' => 1, 'harga' => 1000],
++            ['barang_id' => $barang->id, 'jumlah' => 2, 'harga' => 2000],
++        ],
++    ]);
++
++    $response->assertSessionHasErrors(['items']);
++    expect(Barang_Pengadaan::count())->toBe(0);
++});
++
++test('store rejects a barang that is already attached to this pengadaan', function () {
++    $user = actingUserWithBarangPengadaanPermissions();
++    $pengadaan = Pengadaan::factory()->create();
++    $barang = Barangs::factory()->create();
++    $pengadaan->barang_pengadaan()->create(['barang_id' => $barang->id, 'jumlah' => 1, 'harga' => 1000]);
++
++    $response = $this->actingAs($user)->post("/pengadaan/{$pengadaan->id}/barangs", [
++        'items' => [
++            ['barang_id' => $barang->id, 'jumlah' => 5, 'harga' => 1000],
++        ],
++    ]);
++
++    $response->assertSessionHasErrors(['items']);
++    expect($pengadaan->barang_pengadaan()->count())->toBe(1);
++});
++
++test('update edits a single barang pengadaan line item', function () {
++    $user = actingUserWithBarangPengadaanPermissions();
++    $pengadaan = Pengadaan::factory()->create();
++    $barang = Barangs::factory()->create();
++    $barangPengadaan = $pengadaan->barang_pengadaan()->create(['barang_id' => $barang->id, 'jumlah' => 1, 'harga' => 1000]);
++
++    $response = $this->actingAs($user)->put("/pengadaan/{$pengadaan->id}/barangs/{$barangPengadaan->id}", [
++        'barang_id' => $barang->id,
++        'jumlah' => 9,
++        'harga' => 2500,
++    ]);
++
++    $response->assertRedirect("/pengadaan/{$pengadaan->id}")->assertSessionHas('success');
++
++    $barangPengadaan->refresh();
++    expect($barangPengadaan->jumlah)->toBe(9);
++    expect((int) $barangPengadaan->harga)->toBe(2500);
++});
+diff --git a/tests/Feature/BarangPermintaanTest.php b/tests/Feature/BarangPermintaanTest.php
+new file mode 100644
+index 0000000..66baf90
+--- /dev/null
++++ b/tests/Feature/BarangPermintaanTest.php
+@@ -0,0 +1,109 @@
++<?php
++
++use App\Models\Barang_Permintaan;
++use App\Models\Barangs;
++use App\Models\Permintaan;
++use App\Models\User;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Spatie\Permission\Models\Permission;
++
++uses(RefreshDatabase::class);
++
++beforeEach(function () {
++    foreach ([
++        'permintaan barang create', 'permintaan barang edit', 'permintaan barang delete',
++    ] as $name) {
++        Permission::create(['name' => $name]);
++    }
++});
++
++function actingUserWithBarangPermintaanPermissions()
++{
++    $user = User::factory()->create();
++    $user->givePermissionTo([
++        'permintaan barang create', 'permintaan barang edit', 'permintaan barang delete',
++    ]);
++
++    return $user;
++}
++
++test('create page excludes barangs already added to this permintaan', function () {
++    $user = actingUserWithBarangPermintaanPermissions();
++    $permintaan = Permintaan::factory()->create();
++    $sudahAda = Barangs::factory()->create(['nama_barang' => 'Sudah Ada']);
++    $belumAda = Barangs::factory()->create(['nama_barang' => 'Belum Ada']);
++
++    $permintaan->barang_permintaan()->create(['barang_id' => $sudahAda->id, 'jumlah' => 1]);
++
++    $response = $this->actingAs($user)->get("/permintaan/{$permintaan->id}/barangs/create");
++
++    $response->assertInertia(fn ($page) => $page
++        ->has('barangs', 1)
++        ->where('barangs.0.nama_barang', 'Belum Ada'));
++});
++
++test('store adds multiple items to a permintaan in a single request', function () {
++    $user = actingUserWithBarangPermintaanPermissions();
++    $permintaan = Permintaan::factory()->create();
++    $barangA = Barangs::factory()->create();
++    $barangB = Barangs::factory()->create();
++
++    $response = $this->actingAs($user)->post("/permintaan/{$permintaan->id}/barangs", [
++        'items' => [
++            ['barang_id' => $barangA->id, 'jumlah' => 3],
++            ['barang_id' => $barangB->id, 'jumlah' => 1],
++        ],
++    ]);
++
++    $response->assertRedirect("/permintaan/{$permintaan->id}")->assertSessionHas('success');
++    expect($permintaan->barang_permintaan()->count())->toBe(2);
++});
++
++test('store rejects duplicate barang within the same submission', function () {
++    $user = actingUserWithBarangPermintaanPermissions();
++    $permintaan = Permintaan::factory()->create();
++    $barang = Barangs::factory()->create();
++
++    $response = $this->actingAs($user)->post("/permintaan/{$permintaan->id}/barangs", [
++        'items' => [
++            ['barang_id' => $barang->id, 'jumlah' => 1],
++            ['barang_id' => $barang->id, 'jumlah' => 2],
++        ],
++    ]);
++
++    $response->assertSessionHasErrors(['items']);
++    expect(Barang_Permintaan::count())->toBe(0);
++});
++
++test('store rejects a barang that is already attached to this permintaan', function () {
++    $user = actingUserWithBarangPermintaanPermissions();
++    $permintaan = Permintaan::factory()->create();
++    $barang = Barangs::factory()->create();
++    $permintaan->barang_permintaan()->create(['barang_id' => $barang->id, 'jumlah' => 1]);
++
++    $response = $this->actingAs($user)->post("/permintaan/{$permintaan->id}/barangs", [
++        'items' => [
++            ['barang_id' => $barang->id, 'jumlah' => 5],
++        ],
++    ]);
++
++    $response->assertSessionHasErrors(['items']);
++    expect($permintaan->barang_permintaan()->count())->toBe(1);
++});
++
++test('update edits a single barang permintaan line item', function () {
++    $user = actingUserWithBarangPermintaanPermissions();
++    $permintaan = Permintaan::factory()->create();
++    $barang = Barangs::factory()->create();
++    $barangPermintaan = $permintaan->barang_permintaan()->create(['barang_id' => $barang->id, 'jumlah' => 1]);
++
++    $response = $this->actingAs($user)->put("/permintaan/{$permintaan->id}/barangs/{$barangPermintaan->id}", [
++        'barang_id' => $barang->id,
++        'jumlah' => 12,
++    ]);
++
++    $response->assertRedirect("/permintaan/{$permintaan->id}")->assertSessionHas('success');
++
++    $barangPermintaan->refresh();
++    expect($barangPermintaan->jumlah)->toBe(12);
++});
+diff --git a/tests/Feature/BarangsTest.php b/tests/Feature/BarangsTest.php
+new file mode 100644
+index 0000000..f428201
+--- /dev/null
++++ b/tests/Feature/BarangsTest.php
+@@ -0,0 +1,143 @@
++<?php
++
++use App\Models\Barangs;
++use App\Models\TipeBarang;
++use App\Models\User;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Spatie\Permission\Models\Permission;
++
++uses(RefreshDatabase::class);
++
++beforeEach(function () {
++    Permission::create(['name' => 'barangs index']);
++    Permission::create(['name' => 'barangs create']);
++    Permission::create(['name' => 'barangs edit']);
++    Permission::create(['name' => 'barangs delete']);
++});
++
++test('store requires a valid tipe_barang_id and jenis_barang', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('barangs create');
++
++    $response = $this->actingAs($user)->post('/barangs', [
++        'nama_barang' => 'Kertas A4',
++        'tipe_barang_id' => 9999, // tidak ada
++        'jenis_barang' => 'sangat-panjang', // bukan salah satu pendek/sedang/panjang
++        'satuan' => 'Rim',
++        'stock_awal' => 10,
++    ]);
++
++    $response->assertSessionHasErrors(['tipe_barang_id', 'jenis_barang']);
++});
++
++test('store creates barang and initializes stock_tersedia from stock_awal', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('barangs create');
++    $tipeBarang = TipeBarang::factory()->create();
++
++    $response = $this->actingAs($user)->post('/barangs', [
++        'nama_barang' => 'Kertas A4',
++        'tipe_barang_id' => $tipeBarang->id,
++        'jenis_barang' => 'pendek',
++        'satuan' => 'Rim',
++        'stock_awal' => 50,
++    ]);
++
++    $response->assertRedirect('/barangs')->assertSessionHas('success');
++    $this->assertDatabaseHas('barangs', [
++        'nama_barang' => 'Kertas A4',
++        'tipe_barang_id' => $tipeBarang->id,
++        'jenis_barang' => 'pendek',
++        'stock_awal' => 50,
++        'stock_tersedia' => 50,
++        'stock_masuk' => 0,
++        'stock_keluar' => 0,
++    ]);
++});
++
++test('index filters by tipe_barang_id', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('barangs index');
++
++    $atk = TipeBarang::factory()->create(['nama_tipe' => 'ATK']);
++    $elektronik = TipeBarang::factory()->create(['nama_tipe' => 'Elektronik']);
++
++    Barangs::factory()->create(['nama_barang' => 'Kertas A4', 'tipe_barang_id' => $atk->id]);
++    Barangs::factory()->create(['nama_barang' => 'Laptop', 'tipe_barang_id' => $elektronik->id]);
++
++    $response = $this->actingAs($user)->get('/barangs?tipe_barang_id=' . $atk->id);
++
++    $response->assertInertia(fn ($page) => $page
++        ->component('barangs/index')
++        ->has('barangs.data', 1)
++        ->where('barangs.data.0.nama_barang', 'Kertas A4'));
++});
++
++test('index filters by jenis_barang', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('barangs index');
++
++    Barangs::factory()->create(['nama_barang' => 'Barang Pendek', 'jenis_barang' => 'pendek']);
++    Barangs::factory()->create(['nama_barang' => 'Barang Panjang', 'jenis_barang' => 'panjang']);
++
++    $response = $this->actingAs($user)->get('/barangs?jenis_barang=panjang');
++
++    $response->assertInertia(fn ($page) => $page
++        ->has('barangs.data', 1)
++        ->where('barangs.data.0.nama_barang', 'Barang Panjang'));
++});
++
++test('index combines search, tipe, jenis, and stok filters together', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('barangs index');
++
++    $atk = TipeBarang::factory()->create(['nama_tipe' => 'ATK']);
++
++    // Cocok semua filter
++    Barangs::factory()->create([
++        'nama_barang' => 'Kertas A4 Sinar Mas',
++        'tipe_barang_id' => $atk->id,
++        'jenis_barang' => 'pendek',
++        'stock_tersedia' => 5,
++    ]);
++
++    // Tipe & jenis cocok, tapi nama tidak cocok search
++    Barangs::factory()->create([
++        'nama_barang' => 'Spidol Boardmarker',
++        'tipe_barang_id' => $atk->id,
++        'jenis_barang' => 'pendek',
++        'stock_tersedia' => 5,
++    ]);
++
++    // Nama & tipe & jenis cocok, tapi stok tidak rendah
++    Barangs::factory()->create([
++        'nama_barang' => 'Kertas A4 Lokal',
++        'tipe_barang_id' => $atk->id,
++        'jenis_barang' => 'pendek',
++        'stock_tersedia' => 100,
++    ]);
++
++    $response = $this->actingAs($user)->get('/barangs?' . http_build_query([
++        'search' => 'Kertas A4',
++        'tipe_barang_id' => $atk->id,
++        'jenis_barang' => 'pendek',
++        'stok' => 'rendah',
++    ]));
++
++    $response->assertInertia(fn ($page) => $page
++        ->has('barangs.data', 1)
++        ->where('barangs.data.0.nama_barang', 'Kertas A4 Sinar Mas'));
++});
++
++test('downloadPdf follows the same filters as the index page', function () {
++    $user = User::factory()->create();
++
++    $atk = TipeBarang::factory()->create(['nama_tipe' => 'ATK']);
++    Barangs::factory()->create(['nama_barang' => 'Kertas A4', 'tipe_barang_id' => $atk->id, 'jenis_barang' => 'pendek']);
++    Barangs::factory()->create(['nama_barang' => 'Laptop', 'jenis_barang' => 'panjang']);
++
++    $response = $this->actingAs($user)->get('/barangs/download-pdf?tipe_barang_id=' . $atk->id);
++
++    $response->assertStatus(200);
++    expect($response->headers->get('content-type'))->toContain('application/pdf');
++});
+diff --git a/tests/Feature/PengadaanBusinessLogicTest.php b/tests/Feature/PengadaanBusinessLogicTest.php
+new file mode 100644
+index 0000000..12bc098
+--- /dev/null
++++ b/tests/Feature/PengadaanBusinessLogicTest.php
+@@ -0,0 +1,112 @@
++<?php
++
++use App\Models\Barangs;
++use App\Models\BarangVendor;
++use App\Models\Pengadaan;
++use App\Models\User;
++use App\Models\Vendor;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Spatie\Permission\Models\Permission;
++
++uses(RefreshDatabase::class);
++
++beforeEach(function () {
++    foreach ([
++        'pengadaan index', 'pengadaan create', 'pengadaan edit', 'pengadaan delete',
++        'pengadaan show', 'pengadaan change status',
++    ] as $name) {
++        Permission::create(['name' => $name]);
++    }
++});
++
++function actingUserWithPengadaanPermissions()
++{
++    $user = User::factory()->create();
++    $user->givePermissionTo([
++        'pengadaan index', 'pengadaan create', 'pengadaan edit', 'pengadaan delete',
++        'pengadaan show', 'pengadaan change status',
++    ]);
++
++    return $user;
++}
++
++test('store creates a pengadaan with multiple items and computes total_harga automatically', function () {
++    $user = actingUserWithPengadaanPermissions();
++    $barangA = Barangs::factory()->create();
++    $barangB = Barangs::factory()->create();
++
++    $response = $this->actingAs($user)->post('/pengadaan', [
++        'deskripsi' => 'Pengadaan ATK bulan ini',
++        'items' => [
++            ['barang_id' => $barangA->id, 'jumlah' => 10, 'harga' => 5000],
++            ['barang_id' => $barangB->id, 'jumlah' => 2, 'harga' => 1000000],
++        ],
++    ]);
++
++    $response->assertRedirect('/pengadaan')->assertSessionHas('success');
++
++    $pengadaan = Pengadaan::latest()->first();
++    expect($pengadaan->barang_pengadaan)->toHaveCount(2);
++    // (10 * 5000) + (2 * 1000000) = 2.050.000
++    expect((int) $pengadaan->total_harga)->toBe(2050000);
++});
++
++test('store requires at least one item', function () {
++    $user = actingUserWithPengadaanPermissions();
++
++    $response = $this->actingAs($user)->post('/pengadaan', [
++        'deskripsi' => 'Pengadaan tanpa barang',
++        'items' => [],
++    ]);
++
++    $response->assertSessionHasErrors(['items']);
++});
++
++test('changeStatus moves pengadaan from pending to proses to selesai, adding stock on completion', function () {
++    $user = actingUserWithPengadaanPermissions();
++    $barang = Barangs::factory()->create(['stock_masuk' => 0, 'stock_tersedia' => 10]);
++
++    $pengadaan = Pengadaan::factory()->create(['status' => 'pending']);
++    $pengadaan->barang_pengadaan()->create(['barang_id' => $barang->id, 'jumlah' => 20, 'harga' => 1000]);
++
++    $this->actingAs($user)->post("/pengadaan/{$pengadaan->id}/change-status");
++    $pengadaan->refresh();
++    expect($pengadaan->status)->toBe('proses');
++
++    $this->actingAs($user)->post("/pengadaan/{$pengadaan->id}/change-status");
++    $pengadaan->refresh();
++    expect($pengadaan->status)->toBe('selesai');
++
++    $barang->refresh();
++    expect($barang->stock_masuk)->toBe(20);
++    expect($barang->stock_tersedia)->toBe(30); // 10 awal + 20 masuk
++});
++
++test('changeStatus cannot be changed once a pengadaan is already selesai', function () {
++    $user = actingUserWithPengadaanPermissions();
++    $pengadaan = Pengadaan::factory()->create(['status' => 'selesai']);
++
++    $response = $this->actingAs($user)->post("/pengadaan/{$pengadaan->id}/change-status");
++
++    $response->assertSessionHas('error');
++    $pengadaan->refresh();
++    expect($pengadaan->status)->toBe('selesai');
++});
++
++test('updating the vendor on a pengadaan syncs item prices from that vendor catalog', function () {
++    $user = actingUserWithPengadaanPermissions();
++    $barang = Barangs::factory()->create();
++    $vendor = Vendor::factory()->create();
++    BarangVendor::create(['vendor_id' => $vendor->id, 'barang_id' => $barang->id, 'harga' => 75000]);
++
++    $pengadaan = Pengadaan::factory()->create(['vendor_id' => null]);
++    $pengadaan->barang_pengadaan()->create(['barang_id' => $barang->id, 'jumlah' => 3, 'harga' => 0]);
++
++    $this->actingAs($user)->put("/pengadaan/{$pengadaan->id}", [
++        'vendor_id' => $vendor->id,
++        'deskripsi' => $pengadaan->deskripsi,
++    ]);
++
++    $barangPengadaan = $pengadaan->barang_pengadaan()->first();
++    expect((int) $barangPengadaan->harga)->toBe(75000);
++});
+diff --git a/tests/Feature/PermintaanBusinessLogicTest.php b/tests/Feature/PermintaanBusinessLogicTest.php
+new file mode 100644
+index 0000000..9b786d1
+--- /dev/null
++++ b/tests/Feature/PermintaanBusinessLogicTest.php
+@@ -0,0 +1,199 @@
++<?php
++
++use App\Models\Barangs;
++use App\Models\Pengadaan;
++use App\Models\Permintaan;
++use App\Models\User;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Spatie\Permission\Models\Permission;
++
++uses(RefreshDatabase::class);
++
++beforeEach(function () {
++    foreach ([
++        'permintaan index', 'permintaan create', 'permintaan edit', 'permintaan delete',
++        'permintaan show', 'permintaan change status', 'permintaan approve all normal',
++        'permintaan buat pengadaan selisih',
++    ] as $name) {
++        Permission::create(['name' => $name]);
++    }
++});
++
++function actingUserWithPermintaanPermissions(array $permissions = [])
++{
++    $user = User::factory()->create();
++    $user->givePermissionTo($permissions ?: [
++        'permintaan index', 'permintaan create', 'permintaan edit', 'permintaan delete',
++        'permintaan show', 'permintaan change status', 'permintaan approve all normal',
++        'permintaan buat pengadaan selisih',
++    ]);
++
++    return $user;
++}
++
++test('changeStatus on a normal permintaan moves it to proses and reserves stock as jumlah_permintaan', function () {
++    $user = actingUserWithPermintaanPermissions();
++    $barang = Barangs::factory()->create(['stock_tersedia' => 100, 'jumlah_permintaan' => 0]);
++
++    $permintaan = Permintaan::factory()->create(['urgensi' => 'normal', 'status' => 'pending']);
++    $permintaan->barang_permintaan()->create(['barang_id' => $barang->id, 'jumlah' => 10]);
++
++    $response = $this->actingAs($user)->post("/permintaan/{$permintaan->id}/change-status");
++
++    $response->assertRedirect('/permintaan')->assertSessionHas('success');
++
++    $permintaan->refresh();
++    expect($permintaan->status)->toBe('proses');
++
++    $barang->refresh();
++    expect($barang->jumlah_permintaan)->toBe(10);
++    expect($barang->stock_tersedia)->toBe(100); // belum dikurangi, baru direservasi
++});
++
++test('changeStatus on an urgent (mendesak) permintaan with sufficient stock finalizes it immediately', function () {
++    $user = actingUserWithPermintaanPermissions();
++    $barang = Barangs::factory()->create(['stock_tersedia' => 50, 'stock_keluar' => 0]);
++
++    $permintaan = Permintaan::factory()->create(['urgensi' => 'mendesak', 'status' => 'pending']);
++    $permintaan->barang_permintaan()->create(['barang_id' => $barang->id, 'jumlah' => 5]);
++
++    $this->actingAs($user)->post("/permintaan/{$permintaan->id}/change-status");
++
++    $permintaan->refresh();
++    expect($permintaan->status)->toBe('selesai');
++
++    $barang->refresh();
++    expect($barang->stock_tersedia)->toBe(45);
++    expect($barang->stock_keluar)->toBe(5);
++});
++
++test('changeStatus on an urgent permintaan with insufficient stock auto-creates a deficit pengadaan', function () {
++    $user = actingUserWithPermintaanPermissions();
++    $barang = Barangs::factory()->create(['stock_tersedia' => 3]);
++
++    $permintaan = Permintaan::factory()->create(['urgensi' => 'mendesak', 'status' => 'pending']);
++    $permintaan->barang_permintaan()->create(['barang_id' => $barang->id, 'jumlah' => 10]);
++
++    $this->actingAs($user)->post("/permintaan/{$permintaan->id}/change-status");
++
++    $permintaan->refresh();
++    // Masih 'proses', menunggu pengadaan defisit selesai
++    expect($permintaan->status)->toBe('proses');
++
++    $pengadaan = Pengadaan::where('permintaan_id', $permintaan->id)->first();
++    expect($pengadaan)->not->toBeNull();
++
++    $barangPengadaan = $pengadaan->barang_pengadaan()->first();
++    expect($barangPengadaan->barang_id)->toBe($barang->id);
++    expect($barangPengadaan->jumlah)->toBe(7); // 10 dibutuhkan - 3 tersedia
++});
++
++test('completing the deficit pengadaan re-triggers the urgent permintaan and finalizes it', function () {
++    $user = actingUserWithPermintaanPermissions();
++    $barang = Barangs::factory()->create(['stock_tersedia' => 3]);
++
++    $permintaan = Permintaan::factory()->create(['urgensi' => 'mendesak', 'status' => 'pending']);
++    $permintaan->barang_permintaan()->create(['barang_id' => $barang->id, 'jumlah' => 10]);
++
++    $this->actingAs($user)->post("/permintaan/{$permintaan->id}/change-status");
++
++    $pengadaan = Pengadaan::where('permintaan_id', $permintaan->id)->first();
++
++    // Pengadaan defisit selesai -> stok masuk bertambah -> permintaan dicek ulang
++    $pengadaan->update(['status' => 'selesai']);
++
++    $barang->refresh();
++    expect($barang->stock_tersedia)->toBe(10); // 3 + 7 dari pengadaan
++
++    $permintaan->refresh();
++    expect($permintaan->status)->toBe('selesai');
++
++    $barang->refresh();
++    expect($barang->stock_tersedia)->toBe(0); // 10 - 10 (jumlah permintaan)
++});
++
++test('rejectStatus only works while permintaan is still pending', function () {
++    $user = actingUserWithPermintaanPermissions();
++    $permintaan = Permintaan::factory()->create(['status' => 'proses']);
++
++    $response = $this->actingAs($user)->post("/permintaan/{$permintaan->id}/reject-status", [
++        'alasan_reject' => 'Stok tidak relevan lagi',
++    ]);
++
++    $response->assertSessionHas('error');
++    $permintaan->refresh();
++    expect($permintaan->status)->toBe('proses');
++});
++
++test('rejectStatus rejects a pending permintaan with a reason', function () {
++    $user = actingUserWithPermintaanPermissions();
++    $permintaan = Permintaan::factory()->create(['status' => 'pending']);
++
++    $response = $this->actingAs($user)->post("/permintaan/{$permintaan->id}/reject-status", [
++        'alasan_reject' => 'Tidak sesuai anggaran',
++    ]);
++
++    $response->assertRedirect('/permintaan')->assertSessionHas('success');
++
++    $permintaan->refresh();
++    expect($permintaan->status)->toBe('rejected');
++    expect($permintaan->alasan_reject)->toBe('Tidak sesuai anggaran');
++});
++
++test('approveAllNormal is blocked when any barang has insufficient stock', function () {
++    $user = actingUserWithPermintaanPermissions();
++    $barang = Barangs::factory()->create(['stock_tersedia' => 2, 'jumlah_permintaan' => 5]);
++
++    $permintaan = Permintaan::factory()->create(['urgensi' => 'normal', 'status' => 'proses']);
++    $permintaan->barang_permintaan()->create(['barang_id' => $barang->id, 'jumlah' => 5]);
++
++    $response = $this->actingAs($user)->post('/permintaan/approve-all-normal');
++
++    $response->assertSessionHas('error');
++    $permintaan->refresh();
++    expect($permintaan->status)->toBe('proses');
++});
++
++test('approveAllNormal finalizes all normal permintaan currently in proses when stock is sufficient', function () {
++    $user = actingUserWithPermintaanPermissions();
++    $barang = Barangs::factory()->create(['stock_tersedia' => 20, 'jumlah_permintaan' => 5]);
++
++    $permintaan = Permintaan::factory()->create(['urgensi' => 'normal', 'status' => 'proses']);
++    $permintaan->barang_permintaan()->create(['barang_id' => $barang->id, 'jumlah' => 5]);
++
++    $response = $this->actingAs($user)->post('/permintaan/approve-all-normal');
++
++    $response->assertSessionHas('success');
++
++    $permintaan->refresh();
++    expect($permintaan->status)->toBe('selesai');
++
++    $barang->refresh();
++    expect($barang->stock_tersedia)->toBe(15);
++    expect($barang->jumlah_permintaan)->toBe(0);
++});
++
++test('buatPengadaanSelisih creates a pengadaan covering exactly the stock deficit', function () {
++    $user = actingUserWithPermintaanPermissions();
++    $barang = Barangs::factory()->create(['stock_tersedia' => 4, 'jumlah_permintaan' => 10]);
++
++    $response = $this->actingAs($user)->post('/permintaan/buat-pengadaan-selisih');
++
++    $response->assertSessionHas('success');
++
++    $pengadaan = Pengadaan::latest()->first();
++    expect($pengadaan)->not->toBeNull();
++
++    $barangPengadaan = $pengadaan->barang_pengadaan()->where('barang_id', $barang->id)->first();
++    expect($barangPengadaan->jumlah)->toBe(6); // 10 - 4
++});
++
++test('buatPengadaanSelisih does nothing when there is no stock deficit', function () {
++    $user = actingUserWithPermintaanPermissions();
++    Barangs::factory()->create(['stock_tersedia' => 50, 'jumlah_permintaan' => 5]);
++
++    $response = $this->actingAs($user)->post('/permintaan/buat-pengadaan-selisih');
++
++    $response->assertSessionHas('error');
++    expect(Pengadaan::count())->toBe(0);
++});
+diff --git a/tests/Feature/SeederTest.php b/tests/Feature/SeederTest.php
+new file mode 100644
+index 0000000..c676073
+--- /dev/null
++++ b/tests/Feature/SeederTest.php
+@@ -0,0 +1,30 @@
++<?php
++
++use Database\Seeders\PermissionSeeder;
++use Database\Seeders\RoleSeeder;
++use Database\Seeders\UserSeeder;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Spatie\Permission\Models\Role;
++
++uses(RefreshDatabase::class);
++
++test('full seeder sequence runs without throwing (regression: role name typo)', function () {
++    // Sebelumnya UserSeeder memanggil assignRole('Tata Kelola') padahal
++    // RoleSeeder membuat role dengan nama 'Tata Usaha' -> RoleDoesNotExist.
++    $this->seed(PermissionSeeder::class);
++    $this->seed(RoleSeeder::class);
++    $this->seed(UserSeeder::class);
++
++    expect(Role::where('name', 'Tata Usaha')->exists())->toBeTrue();
++});
++
++test('seeded Tata Usaha user actually has the Tata Usaha role', function () {
++    $this->seed(PermissionSeeder::class);
++    $this->seed(RoleSeeder::class);
++    $this->seed(UserSeeder::class);
++
++    $user = \App\Models\User::where('email', 'tatakelola@gmail.com')->first();
++
++    expect($user)->not->toBeNull();
++    expect($user->hasRole('Tata Usaha'))->toBeTrue();
++});
+diff --git a/tests/Feature/TipeBarangTest.php b/tests/Feature/TipeBarangTest.php
+new file mode 100644
+index 0000000..eaaead6
+--- /dev/null
++++ b/tests/Feature/TipeBarangTest.php
+@@ -0,0 +1,100 @@
++<?php
++
++use App\Models\Barangs;
++use App\Models\TipeBarang;
++use App\Models\User;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Spatie\Permission\Models\Permission;
++
++uses(RefreshDatabase::class);
++
++beforeEach(function () {
++    Permission::create(['name' => 'tipe barangs index']);
++    Permission::create(['name' => 'tipe barangs create']);
++    Permission::create(['name' => 'tipe barangs edit']);
++    Permission::create(['name' => 'tipe barangs delete']);
++});
++
++test('unauthorized user cannot access tipe barangs index', function () {
++    $user = User::factory()->create();
++
++    $this->actingAs($user)->get('/tipe-barangs')->assertStatus(403);
++});
++
++test('authorized user can view tipe barangs index', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('tipe barangs index');
++
++    TipeBarang::factory()->count(3)->create();
++
++    $this->actingAs($user)
++        ->get('/tipe-barangs')
++        ->assertStatus(200)
++        ->assertInertia(fn ($page) => $page
++            ->component('tipe-barangs/index')
++            ->has('tipeBarangs.data', 3));
++});
++
++test('authorized user can create a new tipe barang', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('tipe barangs create');
++
++    $response = $this->actingAs($user)->post('/tipe-barangs', [
++        'nama_tipe' => 'Alat Tulis Kantor',
++    ]);
++
++    $response->assertRedirect('/tipe-barangs')->assertSessionHas('success');
++    $this->assertDatabaseHas('tipe_barangs', ['nama_tipe' => 'Alat Tulis Kantor']);
++});
++
++test('cannot create tipe barang with duplicate name', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('tipe barangs create');
++
++    TipeBarang::factory()->create(['nama_tipe' => 'Elektronik']);
++
++    $response = $this->actingAs($user)->post('/tipe-barangs', [
++        'nama_tipe' => 'Elektronik',
++    ]);
++
++    $response->assertSessionHasErrors(['nama_tipe']);
++});
++
++test('authorized user can update a tipe barang', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('tipe barangs edit');
++
++    $tipeBarang = TipeBarang::factory()->create(['nama_tipe' => 'Lama']);
++
++    $response = $this->actingAs($user)->put("/tipe-barangs/{$tipeBarang->id}", [
++        'nama_tipe' => 'Baru',
++    ]);
++
++    $response->assertRedirect('/tipe-barangs');
++    $this->assertDatabaseHas('tipe_barangs', ['id' => $tipeBarang->id, 'nama_tipe' => 'Baru']);
++});
++
++test('authorized user can delete a tipe barang that is not in use', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('tipe barangs delete');
++
++    $tipeBarang = TipeBarang::factory()->create();
++
++    $response = $this->actingAs($user)->delete("/tipe-barangs/{$tipeBarang->id}");
++
++    $response->assertRedirect('/tipe-barangs')->assertSessionHas('success');
++    $this->assertDatabaseMissing('tipe_barangs', ['id' => $tipeBarang->id]);
++});
++
++test('cannot delete a tipe barang that is still used by a barang', function () {
++    $user = User::factory()->create();
++    $user->givePermissionTo('tipe barangs delete');
++
++    $tipeBarang = TipeBarang::factory()->create();
++    Barangs::factory()->create(['tipe_barang_id' => $tipeBarang->id]);
++
++    $response = $this->actingAs($user)->delete("/tipe-barangs/{$tipeBarang->id}");
++
++    $response->assertRedirect('/tipe-barangs')->assertSessionHas('error');
++    $this->assertDatabaseHas('tipe_barangs', ['id' => $tipeBarang->id]);
++});
+diff --git a/tests/Feature/UserTest.php b/tests/Feature/UserTest.php
+index 7c0ad76..0b3ae38 100644
+--- a/tests/Feature/UserTest.php
++++ b/tests/Feature/UserTest.php
+@@ -102,3 +102,41 @@
+     $response->assertRedirect(route('users.index'));
+     $this->assertDatabaseMissing('users', ['email' => 'todelete@example.com']);
+ });
++
++test('update succeeds without password and keeps the old password unchanged', function () {
++    $auth = User::factory()->create(['email_verified_at' => now()]);
++    $auth->givePermissionTo('users edit');
++
++    $user = User::factory()->create([
++        'name'     => 'Old Name',
++        'email'    => 'keep-password@example.com',
++        'password' => 'original-password',
++    ]);
++    $originalHashedPassword = $user->password;
++
++    Role::create(['name' => 'user']);
++
++    $response = $this->actingAs($auth)->put(route('users.update', $user->id), [
++        'name'  => 'New Name',
++        'email' => 'keep-password@example.com',
++        'role'  => 'user',
++        // sengaja tidak mengirim 'password' sama sekali
++    ]);
++
++    $response->assertSessionDoesntHaveErrors(['password']);
++    $response->assertRedirect(route('users.index'));
++
++    $user->refresh();
++    expect($user->name)->toBe('New Name');
++    expect($user->password)->toBe($originalHashedPassword);
++});
++
++test('User model has working pengadaan() and permintaan() relations (regression: was dead code)', function () {
++    $user = User::factory()->create();
++
++    \App\Models\Pengadaan::factory()->create(['user_id' => $user->id]);
++    \App\Models\Permintaan::factory()->create(['user_id' => $user->id]);
++
++    expect($user->pengadaan)->toHaveCount(1);
++    expect($user->permintaan)->toHaveCount(1);
++});
+-- 
+2.43.0
+

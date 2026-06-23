@@ -95,8 +95,8 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain section="Main" items={mainNavItems} />
-                <NavMain section="Management User" items={userManagement} />
-                <NavMain section="Management Inventaris" items={barangManagement} />
+                <NavMain section="Management Pengguna" items={userManagement} />
+                <NavMain section="Management Barang" items={barangManagement} />
             </SidebarContent>
 
             <SidebarFooter>

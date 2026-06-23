@@ -84,7 +84,7 @@ test('authorized user can create new role with permissions', function () {
     $this->assertDatabaseHas('roles', ['name' => 'new-role']);
     
     $role = Role::where('name', 'new-role')->first();
-    expect($role->permissions)->toHaveCount(4);
+    expect($role->permissions)->toHaveCount($permissions->count());
 });
 
 test('authorized user can view edit role form', function () {
@@ -121,7 +121,7 @@ test('authorized user can update role and its permissions', function () {
     $this->assertDatabaseHas('roles', ['name' => 'updated-role']);
     
     $updatedRole = Role::find($role->id);
-    expect($updatedRole->permissions)->toHaveCount(4);
+    expect($updatedRole->permissions)->toHaveCount($permissions->count());
 });
 
 test('authorized user can delete role', function () {
@@ -164,8 +164,8 @@ test('cannot update role with duplicate name', function () {
     $response = $this->actingAs($user)
         ->put("/roles/{$roleToUpdate->id}", [
             'name' => 'existing-role',
-            'permissions' => [],
+            'permissions' => ['roles edit'],
         ]);
-    
+
     $response->assertSessionHasErrors(['name']);
 });

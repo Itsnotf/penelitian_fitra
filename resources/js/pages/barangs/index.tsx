@@ -47,7 +47,7 @@ const jenisLabel: Record<JenisBarang, string> = {
     panjang: 'Panjang',
 };
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Inventaris', href: '/barangs' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Barang', href: '/barangs' }];
 
 export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaan, allStockSufficient, can, tipeBarangs }: Props) {
     const [search, setSearch] = useState(filters.search || '');

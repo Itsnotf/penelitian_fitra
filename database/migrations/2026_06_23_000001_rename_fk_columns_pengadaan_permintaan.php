@@ -18,8 +18,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE barang_pengadaan DROP FOREIGN KEY barang_pengadaan_pembelian_id_foreign');
-        DB::statement('ALTER TABLE barang_permintaan DROP FOREIGN KEY barang_permintaan_pengajuan_id_foreign');
+        $isMySQL = DB::connection()->getDriverName() === 'mysql';
+
+        if ($isMySQL) {
+            DB::statement('ALTER TABLE barang_pengadaan DROP FOREIGN KEY barang_pengadaan_pembelian_id_foreign');
+            DB::statement('ALTER TABLE barang_permintaan DROP FOREIGN KEY barang_permintaan_pengajuan_id_foreign');
+        }
 
         Schema::table('barang_pengadaan', function (Blueprint $table) {
             $table->renameColumn('pembelian_id', 'pengadaan_id');
@@ -33,14 +37,20 @@ return new class extends Migration
             $table->renameColumn('pengajuan_id', 'permintaan_id');
         });
 
-        DB::statement('ALTER TABLE barang_pengadaan ADD CONSTRAINT barang_pengadaan_pengadaan_id_foreign FOREIGN KEY (pengadaan_id) REFERENCES pengadaan(id) ON DELETE CASCADE');
-        DB::statement('ALTER TABLE barang_permintaan ADD CONSTRAINT barang_permintaan_permintaan_id_foreign FOREIGN KEY (permintaan_id) REFERENCES permintaan(id) ON DELETE CASCADE');
+        if ($isMySQL) {
+            DB::statement('ALTER TABLE barang_pengadaan ADD CONSTRAINT barang_pengadaan_pengadaan_id_foreign FOREIGN KEY (pengadaan_id) REFERENCES pengadaan(id) ON DELETE CASCADE');
+            DB::statement('ALTER TABLE barang_permintaan ADD CONSTRAINT barang_permintaan_permintaan_id_foreign FOREIGN KEY (permintaan_id) REFERENCES permintaan(id) ON DELETE CASCADE');
+        }
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE barang_pengadaan DROP FOREIGN KEY barang_pengadaan_pengadaan_id_foreign');
-        DB::statement('ALTER TABLE barang_permintaan DROP FOREIGN KEY barang_permintaan_permintaan_id_foreign');
+        $isMySQL = DB::connection()->getDriverName() === 'mysql';
+
+        if ($isMySQL) {
+            DB::statement('ALTER TABLE barang_pengadaan DROP FOREIGN KEY barang_pengadaan_pengadaan_id_foreign');
+            DB::statement('ALTER TABLE barang_permintaan DROP FOREIGN KEY barang_permintaan_permintaan_id_foreign');
+        }
 
         Schema::table('barang_pengadaan', function (Blueprint $table) {
             $table->renameColumn('pengadaan_id', 'pembelian_id');
@@ -54,7 +64,9 @@ return new class extends Migration
             $table->renameColumn('permintaan_id', 'pengajuan_id');
         });
 
-        DB::statement('ALTER TABLE barang_pengadaan ADD CONSTRAINT barang_pengadaan_pembelian_id_foreign FOREIGN KEY (pembelian_id) REFERENCES pengadaan(id) ON DELETE CASCADE');
-        DB::statement('ALTER TABLE barang_permintaan ADD CONSTRAINT barang_permintaan_pengajuan_id_foreign FOREIGN KEY (pengajuan_id) REFERENCES permintaan(id) ON DELETE CASCADE');
+        if ($isMySQL) {
+            DB::statement('ALTER TABLE barang_pengadaan ADD CONSTRAINT barang_pengadaan_pembelian_id_foreign FOREIGN KEY (pembelian_id) REFERENCES pengadaan(id) ON DELETE CASCADE');
+            DB::statement('ALTER TABLE barang_permintaan ADD CONSTRAINT barang_permintaan_pengajuan_id_foreign FOREIGN KEY (pengajuan_id) REFERENCES permintaan(id) ON DELETE CASCADE');
+        }
     }
 };

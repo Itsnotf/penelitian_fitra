@@ -15,7 +15,7 @@ interface Props {
 
 export default function BarangEditPage({ barang, tipeBarangs }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Inventaris', href: '/barangs' },
+        { title: 'Barang', href: '/barangs' },
         { title: 'Edit Barang', href: `/barangs/${barang.id}/edit` },
     ];
 

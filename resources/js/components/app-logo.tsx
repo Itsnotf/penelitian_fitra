@@ -6,7 +6,7 @@ export default function AppLogo() {
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
                 <span className="mb-0.5  leading-tight font-semibold">
-                    Sistem Inventarisasi Bapenda Sumsel
+                    SIPERBA
                 </span>
             </div>
         </>

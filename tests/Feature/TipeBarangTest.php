@@ -9,10 +9,10 @@ use Spatie\Permission\Models\Permission;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Permission::create(['name' => 'tipe barangs index']);
-    Permission::create(['name' => 'tipe barangs create']);
-    Permission::create(['name' => 'tipe barangs edit']);
-    Permission::create(['name' => 'tipe barangs delete']);
+    Permission::firstOrCreate(['name' => 'tipe barangs index']);
+    Permission::firstOrCreate(['name' => 'tipe barangs create']);
+    Permission::firstOrCreate(['name' => 'tipe barangs edit']);
+    Permission::firstOrCreate(['name' => 'tipe barangs delete']);
 });
 
 test('unauthorized user cannot access tipe barangs index', function () {

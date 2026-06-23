@@ -16,8 +16,8 @@ class UserSeeder extends Seeder
         $admin->assignRole('Admin');
 
         $tataKelola = User::firstOrCreate(
-            ['email' => 'tatakelola@gmail.com'],
-            ['name' => 'Tata Kelola', 'password' => bcrypt('password'), 'email_verified_at' => now()]
+            ['email' => 'tatausaha@gmail.com'],
+            ['name' => 'Tata Usaha', 'password' => bcrypt('password'), 'email_verified_at' => now()]
         );
         $tataKelola->assignRole('Tata Usaha');
 

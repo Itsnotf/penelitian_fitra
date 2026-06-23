@@ -24,7 +24,15 @@ return new class extends Migration
             );
         }
 
-        DB::statement('ALTER TABLE barangs MODIFY tipe_barang_id BIGINT UNSIGNED NOT NULL');
+        $isMySQL = DB::connection()->getDriverName() === 'mysql';
+
+        if ($isMySQL) {
+            DB::statement('ALTER TABLE barangs MODIFY tipe_barang_id BIGINT UNSIGNED NOT NULL');
+        } else {
+            Schema::table('barangs', function (Blueprint $table) {
+                $table->unsignedBigInteger('tipe_barang_id')->nullable(false)->change();
+            });
+        }
 
         Schema::table('barangs', function (Blueprint $table) {
             $table->dropColumn('tipe');
@@ -37,12 +45,24 @@ return new class extends Migration
             $table->string('tipe')->nullable()->after('nama_barang');
         });
 
-        DB::statement('
-            UPDATE barangs
-            JOIN tipe_barangs ON tipe_barangs.id = barangs.tipe_barang_id
-            SET barangs.tipe = tipe_barangs.nama_tipe
-        ');
+        $isMySQL = DB::connection()->getDriverName() === 'mysql';
 
-        DB::statement('ALTER TABLE barangs MODIFY tipe_barang_id BIGINT UNSIGNED NULL');
+        if ($isMySQL) {
+            DB::statement('
+                UPDATE barangs
+                JOIN tipe_barangs ON tipe_barangs.id = barangs.tipe_barang_id
+                SET barangs.tipe = tipe_barangs.nama_tipe
+            ');
+            DB::statement('ALTER TABLE barangs MODIFY tipe_barang_id BIGINT UNSIGNED NULL');
+        } else {
+            DB::statement('
+                UPDATE barangs SET tipe = (
+                    SELECT nama_tipe FROM tipe_barangs WHERE tipe_barangs.id = barangs.tipe_barang_id
+                )
+            ');
+            Schema::table('barangs', function (Blueprint $table) {
+                $table->unsignedBigInteger('tipe_barang_id')->nullable()->change();
+            });
+        }
     }
 };

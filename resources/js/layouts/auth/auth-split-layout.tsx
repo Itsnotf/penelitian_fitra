@@ -23,20 +23,20 @@ export default function AuthSplitLayout({
                 <div className="absolute inset-0 bg-cover bg-center bg-[url('/logo-image.jpg')]" />
                 <div className="absolute inset-0 bg-zinc-900/50" />
                 {/* <img src="login-image.webp" alt="bapenda" /> */}
-                    
+
                 <Link
                     href={home()}
                     className="relative z-20 flex items-center text-lg font-medium"
                 >
                     <img src="/logo.png" alt="SIBS" className="mr-2 h-8" />
                     {/* <AppLogoIcon className="mr-2 size-8 fill-current text-white" /> */}
-                    Sistem Inventarisasi Bapenda Sumsel 
+                    Sistem Pengadaan Dan Permintaan Barang
                 </Link>
                 {quote && (
                     <div className="relative z-20 mt-auto">
                         <blockquote className="space-y-2">
                             <p className="text-lg">
-                             SIBS adalah Sistem Inventarisasi barang sederhana dan mudah digunakan untuk membantu pengelolaan aset.
+                             SIPERBA adalah Sistem pengadaan dan permintaan barang yang mudah digunakan untuk membantu pengelolaan aset.
                             </p>
                             <footer className="text-sm text-neutral-300">
                                Bapenda Sumsel

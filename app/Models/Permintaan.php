@@ -73,7 +73,10 @@ class Permintaan extends Model
             ];
 
             if ($this->urgensi === 'normal') {
-                $updates['jumlah_permintaan'] = DB::raw('GREATEST(0, jumlah_permintaan - ' . (int) $bp->jumlah . ')');
+                $jumlah = (int) $bp->jumlah;
+                $updates['jumlah_permintaan'] = DB::raw(
+                    "CASE WHEN jumlah_permintaan - {$jumlah} < 0 THEN 0 ELSE jumlah_permintaan - {$jumlah} END"
+                );
             }
 
             DB::table('barangs')->where('id', $bp->barang_id)->update($updates);
