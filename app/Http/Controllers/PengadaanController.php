@@ -210,7 +210,7 @@ class PengadaanController extends Controller implements HasMiddleware
 
     public function downloadPdf(string $id)
     {
-        $pengadaan = Pengadaan::with('barang_pengadaan.barang', 'user', 'vendor')->findOrFail($id);
+        $pengadaan = Pengadaan::with('barang_pengadaan.barang.tipeBarang', 'user', 'vendor')->findOrFail($id);
         $html      = view('pdf.pengadaan', ['pengadaan' => $pengadaan])->render();
 
         $pdf = Pdf::loadHTML($html);

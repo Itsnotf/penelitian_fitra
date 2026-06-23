@@ -206,7 +206,7 @@
                     <tr>
                         <td class="text-center"><?php echo $index + 1; ?></td>
                         <td><?php echo $item->barang->nama_barang ?? 'N/A'; ?></td>
-                        <td class="text-center"><?php echo $item->barang->tipe ?? 'Unit'; ?></td>
+                        <td class="text-center"><?php echo $item->barang->tipeBarang->nama_tipe ?? '-'; ?></td>
                         <td class="text-center"><?php echo $item->jumlah; ?></td>
                         <td style="text-transform: capitalize; font-style: italic;">
                             <?php echo terbilang($item->jumlah); ?>

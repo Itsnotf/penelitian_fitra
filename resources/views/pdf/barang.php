@@ -106,12 +106,13 @@
         <thead>
             <tr>
                 <th style="width: 5%;">NO.</th>
-                <th style="width: 30%;">NAMA BARANG</th>
-                <th style="width: 10%;">TIPE</th>
+                <th style="width: 24%;">NAMA BARANG</th>
+                <th style="width: 12%;">TIPE</th>
+                <th style="width: 10%;">JENIS</th>
                 <th style="width: 12%;">STOCK AWAL</th>
                 <th style="width: 12%;">STOCK KELUAR</th>
                 <th style="width: 12%;">STOCK MASUK</th>
-                <th style="width: 12%;">STOCK TERSEDIA</th>
+                <th style="width: 13%;">STOCK TERSEDIA</th>
             </tr>
         </thead>
         <tbody>
@@ -120,7 +121,8 @@
                     <tr>
                         <td class="text-center"><?php echo $index + 1; ?></td>
                         <td><?php echo $barang->nama_barang; ?></td>
-                        <td class="text-center"><?php echo $barang->tipe; ?></td>
+                        <td class="text-center"><?php echo $barang->tipeBarang->nama_tipe ?? '-'; ?></td>
+                        <td class="text-center"><?php echo ucfirst($barang->jenis_barang ?? '-'); ?></td>
                         <td class="text-center"><?php echo $barang->stock_awal; ?></td>
                         <td class="text-center"><?php echo $barang->stock_keluar; ?></td>
                         <td class="text-center"><?php echo $barang->stock_masuk; ?></td>
@@ -129,7 +131,7 @@
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="7" class="text-center" style="padding: 20px;">Data tidak tersedia</td>
+                    <td colspan="8" class="text-center" style="padding: 20px;">Data tidak tersedia</td>
                 </tr>
             <?php endif; ?>
         </tbody>

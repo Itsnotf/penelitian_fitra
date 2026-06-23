@@ -233,7 +233,7 @@ class PermintaanController extends Controller implements HasMiddleware
 
     public function downloadPdf(string $id)
     {
-        $permintaan = Permintaan::with('barang_permintaan.barang', 'user')->findOrFail($id);
+        $permintaan = Permintaan::with('barang_permintaan.barang.tipeBarang', 'user')->findOrFail($id);
         $html       = view('pdf.permintaan', ['permintaan' => $permintaan])->render();
 
         $pdf = Pdf::loadHTML($html);
