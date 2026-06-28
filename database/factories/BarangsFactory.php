@@ -14,7 +14,7 @@ class BarangsFactory extends Factory
         return [
             'nama_barang'       => fake()->unique()->words(2, true),
             'tipe_barang_id'    => TipeBarang::factory(),
-            'jenis_barang'      => fake()->randomElement(['pendek', 'sedang', 'panjang']),
+            'jenis_barang'      => fake()->randomElement(['habis_pakai', 'tidak_habis_pakai']),
             'satuan'            => fake()->randomElement(['Pcs', 'Rim', 'Box', 'Unit']),
             'stock_awal'        => 100,
             'stock_masuk'       => 0,

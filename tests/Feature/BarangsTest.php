@@ -22,7 +22,7 @@ test('store requires a valid tipe_barang_id and jenis_barang', function () {
     $response = $this->actingAs($user)->post('/barangs', [
         'nama_barang' => 'Kertas A4',
         'tipe_barang_id' => 9999, // tidak ada
-        'jenis_barang' => 'sangat-panjang', // bukan salah satu pendek/sedang/panjang
+        'jenis_barang' => 'sangat-panjang', // bukan habis_pakai atau tidak_habis_pakai
         'satuan' => 'Rim',
         'stock_awal' => 10,
     ]);
@@ -38,7 +38,7 @@ test('store creates barang and initializes stock_tersedia from stock_awal', func
     $response = $this->actingAs($user)->post('/barangs', [
         'nama_barang' => 'Kertas A4',
         'tipe_barang_id' => $tipeBarang->id,
-        'jenis_barang' => 'pendek',
+        'jenis_barang' => 'habis_pakai',
         'satuan' => 'Rim',
         'stock_awal' => 50,
     ]);
@@ -47,7 +47,7 @@ test('store creates barang and initializes stock_tersedia from stock_awal', func
     $this->assertDatabaseHas('barangs', [
         'nama_barang' => 'Kertas A4',
         'tipe_barang_id' => $tipeBarang->id,
-        'jenis_barang' => 'pendek',
+        'jenis_barang' => 'habis_pakai',
         'stock_awal' => 50,
         'stock_tersedia' => 50,
         'stock_masuk' => 0,
@@ -77,14 +77,14 @@ test('index filters by jenis_barang', function () {
     $user = User::factory()->create();
     $user->givePermissionTo('barangs index');
 
-    Barangs::factory()->create(['nama_barang' => 'Barang Pendek', 'jenis_barang' => 'pendek']);
-    Barangs::factory()->create(['nama_barang' => 'Barang Panjang', 'jenis_barang' => 'panjang']);
+    Barangs::factory()->create(['nama_barang' => 'Barang Habis Pakai', 'jenis_barang' => 'habis_pakai']);
+    Barangs::factory()->create(['nama_barang' => 'Barang Tidak Habis Pakai', 'jenis_barang' => 'tidak_habis_pakai']);
 
-    $response = $this->actingAs($user)->get('/barangs?jenis_barang=panjang');
+    $response = $this->actingAs($user)->get('/barangs?jenis_barang=tidak_habis_pakai');
 
     $response->assertInertia(fn ($page) => $page
         ->has('barangs.data', 1)
-        ->where('barangs.data.0.nama_barang', 'Barang Panjang'));
+        ->where('barangs.data.0.nama_barang', 'Barang Tidak Habis Pakai'));
 });
 
 test('index combines search, tipe, jenis, and stok filters together', function () {
@@ -97,7 +97,7 @@ test('index combines search, tipe, jenis, and stok filters together', function (
     Barangs::factory()->create([
         'nama_barang' => 'Kertas A4 Sinar Mas',
         'tipe_barang_id' => $atk->id,
-        'jenis_barang' => 'pendek',
+        'jenis_barang' => 'habis_pakai',
         'stock_tersedia' => 5,
     ]);
 
@@ -105,7 +105,7 @@ test('index combines search, tipe, jenis, and stok filters together', function (
     Barangs::factory()->create([
         'nama_barang' => 'Spidol Boardmarker',
         'tipe_barang_id' => $atk->id,
-        'jenis_barang' => 'pendek',
+        'jenis_barang' => 'habis_pakai',
         'stock_tersedia' => 5,
     ]);
 
@@ -113,14 +113,14 @@ test('index combines search, tipe, jenis, and stok filters together', function (
     Barangs::factory()->create([
         'nama_barang' => 'Kertas A4 Lokal',
         'tipe_barang_id' => $atk->id,
-        'jenis_barang' => 'pendek',
+        'jenis_barang' => 'habis_pakai',
         'stock_tersedia' => 100,
     ]);
 
     $response = $this->actingAs($user)->get('/barangs?' . http_build_query([
         'search' => 'Kertas A4',
         'tipe_barang_id' => $atk->id,
-        'jenis_barang' => 'pendek',
+        'jenis_barang' => 'habis_pakai',
         'stok' => 'rendah',
     ]));
 
@@ -133,8 +133,8 @@ test('downloadPdf follows the same filters as the index page', function () {
     $user = User::factory()->create();
 
     $atk = TipeBarang::factory()->create(['nama_tipe' => 'ATK']);
-    Barangs::factory()->create(['nama_barang' => 'Kertas A4', 'tipe_barang_id' => $atk->id, 'jenis_barang' => 'pendek']);
-    Barangs::factory()->create(['nama_barang' => 'Laptop', 'jenis_barang' => 'panjang']);
+    Barangs::factory()->create(['nama_barang' => 'Kertas A4', 'tipe_barang_id' => $atk->id, 'jenis_barang' => 'habis_pakai']);
+    Barangs::factory()->create(['nama_barang' => 'Laptop', 'jenis_barang' => 'tidak_habis_pakai']);
 
     $response = $this->actingAs($user)->get('/barangs/download-pdf?tipe_barang_id=' . $atk->id);
 

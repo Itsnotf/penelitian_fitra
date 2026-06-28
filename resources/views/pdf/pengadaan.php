@@ -209,11 +209,10 @@
             </td>
 
             <td width="50%" class="text-center">
-                <div>Yang Mengajukan,</div>
-                <div style="font-weight: bold; margin-bottom: 5px;"><?php echo $pengadaan->user->role ?? 'Pengadaan'; ?></div>
+                <div>Yang Mengajukan, <br> <b> Pemohon</b></div>
                 <div class="signature-space"></div>
                 <div class="footer-name"><?php echo $pengadaan->user->name; ?></div>
-                <div style="padding-top: 20px;">(........................................)</div>
+                <div><?php echo $pengadaan->user->getRoleNames()->first() ?? '-'; ?></div>
             </td>
         </tr>
     </table>

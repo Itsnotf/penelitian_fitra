@@ -94,7 +94,7 @@ export interface TipeBarang {
     barangs_count?: number;
 }
 
-export type JenisBarang = 'pendek' | 'sedang' | 'panjang';
+export type JenisBarang = 'habis_pakai' | 'tidak_habis_pakai';
 
 export interface Barang {
     id: number;

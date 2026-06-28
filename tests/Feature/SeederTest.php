@@ -23,7 +23,7 @@ test('seeded Tata Usaha user actually has the Tata Usaha role', function () {
     $this->seed(RoleSeeder::class);
     $this->seed(UserSeeder::class);
 
-    $user = \App\Models\User::where('email', 'tatakelola@gmail.com')->first();
+    $user = \App\Models\User::where('email', 'tatausaha@gmail.com')->first();
 
     expect($user)->not->toBeNull();
     expect($user->hasRole('Tata Usaha'))->toBeTrue();

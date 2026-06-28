@@ -9,6 +9,7 @@ use App\Models\Barang_Permintaan;
 use App\Models\Barangs;
 use App\Models\Pengadaan;
 use App\Models\Permintaan;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -234,7 +235,8 @@ class PermintaanController extends Controller implements HasMiddleware
     public function downloadPdf(string $id)
     {
         $permintaan = Permintaan::with('barang_permintaan.barang.tipeBarang', 'user')->findOrFail($id);
-        $html       = view('pdf.permintaan', ['permintaan' => $permintaan])->render();
+        $tatausaha  = User::role('Tata Usaha')->first();
+        $html       = view('pdf.permintaan', ['permintaan' => $permintaan, 'tatausaha' => $tatausaha])->render();
 
         $pdf = Pdf::loadHTML($html);
         $pdf->setPaper('A4', 'portrait');

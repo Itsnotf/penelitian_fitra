@@ -56,15 +56,14 @@ export default function BarangCreatePage({ tipeBarangs }: Props) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="jenis_barang">Jenis Barang (Durasi Pakai)</Label>
+                            <Label htmlFor="jenis_barang">Jenis Barang</Label>
                             <Select name="jenis_barang" required>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Pilih jenis" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="pendek">Pendek</SelectItem>
-                                    <SelectItem value="sedang">Sedang</SelectItem>
-                                    <SelectItem value="panjang">Panjang</SelectItem>
+                                    <SelectItem value="habis_pakai">Habis Pakai</SelectItem>
+                                    <SelectItem value="tidak_habis_pakai">Tidak Habis Pakai</SelectItem>
                                 </SelectContent>
                             </Select>
                             <InputError message={errors.jenis_barang} />

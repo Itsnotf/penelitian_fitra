@@ -42,9 +42,8 @@ interface Props {
 }
 
 const jenisLabel: Record<JenisBarang, string> = {
-    pendek: 'Pendek',
-    sedang: 'Sedang',
-    panjang: 'Panjang',
+    habis_pakai: 'Habis Pakai',
+    tidak_habis_pakai: 'Tidak Habis Pakai',
 };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Barang', href: '/barangs' }];
@@ -134,9 +133,8 @@ export default function BarangPage({ barangs, filters, flash, hasJumlahPermintaa
                         <SelectTrigger className="w-40"><SelectValue placeholder="Jenis barang" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="_semua">Semua jenis</SelectItem>
-                            <SelectItem value="pendek">Pendek</SelectItem>
-                            <SelectItem value="sedang">Sedang</SelectItem>
-                            <SelectItem value="panjang">Panjang</SelectItem>
+                            <SelectItem value="habis_pakai">Habis Pakai</SelectItem>
+                            <SelectItem value="tidak_habis_pakai">Tidak Habis Pakai</SelectItem>
                         </SelectContent>
                     </Select>
 

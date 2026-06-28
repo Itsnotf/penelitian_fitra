@@ -122,7 +122,10 @@
                         <td class="text-center"><?php echo $index + 1; ?></td>
                         <td><?php echo $barang->nama_barang; ?></td>
                         <td class="text-center"><?php echo $barang->tipeBarang->nama_tipe ?? '-'; ?></td>
-                        <td class="text-center"><?php echo ucfirst($barang->jenis_barang ?? '-'); ?></td>
+                        <td class="text-center"><?php
+                            $jenisLabel = ['habis_pakai' => 'Habis Pakai', 'tidak_habis_pakai' => 'Tidak Habis Pakai'];
+                            echo $jenisLabel[$barang->jenis_barang] ?? '-';
+                        ?></td>
                         <td class="text-center"><?php echo $barang->stock_awal; ?></td>
                         <td class="text-center"><?php echo $barang->stock_keluar; ?></td>
                         <td class="text-center"><?php echo $barang->stock_masuk; ?></td>

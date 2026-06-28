@@ -16,7 +16,7 @@ class UpdateRequest extends FormRequest
         return [
             'nama_barang'    => 'required|string|max:255',
             'tipe_barang_id' => 'required|exists:tipe_barangs,id',
-            'jenis_barang'   => 'required|in:pendek,sedang,panjang',
+            'jenis_barang'   => 'required|in:habis_pakai,tidak_habis_pakai',
             'satuan'         => 'required|string|max:50',
             'stock_awal'     => 'required|integer|min:0',
         ];

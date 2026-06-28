@@ -225,10 +225,10 @@
     <table class="table-layout" style="margin-top: 40px;">
         <tr>
             <td width="33%" class="text-center">
-                <div>Yang Menyerahkan,</div>
-                <div style="font-weight: bold; margin-bottom: 5px;">Tata Usaha</div>
+                <div>Penanggung Jawab,</div>
                 <div class="signature-space"></div>
-                <div class="footer-name">( ........................... )</div>
+                <div class="footer-name"><?php echo $tatausaha ? $tatausaha->name : '( ........................... )'; ?></div>
+                <div><?php echo $tatausaha ? ($tatausaha->getRoleNames()->first() ?? '-') : ''; ?></div>
             </td>
 
             <td width="33%" class="text-center" style="padding-top: 100px;">
@@ -242,9 +242,10 @@
 
             <td width="33%" class="text-center">
                 <div>Yang Menerima,</div>
-                <div style="font-weight: bold; margin-bottom: 5px;"><?php echo $permintaan->user->role ?? 'Pemohon'; ?></div>
+                <div style="font-weight: bold; margin-bottom: 5px;">Pemohon</div>
                 <div class="signature-space"></div>
                 <div class="footer-name"><?php echo $permintaan->user->name; ?></div>
+                <div><?php echo $permintaan->user->getRoleNames()->first() ?? '-'; ?></div>
             </td>
         </tr>
     </table>
